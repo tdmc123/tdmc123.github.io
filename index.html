@@ -692,14 +692,15 @@
     </div>
 
     <script>
+        // ============================================================
+        // ★★★ Token 已放到全局作用域，控制台可直接访问 ★★★
+        // ============================================================
+        const GITHUB_TOKEN = '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';
+        // ============================================================
+
+        // 其余所有功能保持不变
         (function() {
             'use strict';
-
-            // ============================================================
-            // ★★★ 您的 Token（已配置） ★★★
-            // ============================================================
-            const GITHUB_TOKEN = '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';
-            // ============================================================
 
             const STORAGE_KEY = 'tongding_blog_posts';
             const DATA_URL = 'posts.json';
@@ -907,13 +908,15 @@
                 });
             }
 
-            // ---------- 保存到 GitHub ----------
+            // ---------- 保存到 GitHub（使用全局的 GITHUB_TOKEN） ----------
             async function saveToGitHub() {
                 const posts = loadPosts();
                 if (!posts) {
                     alert('暂无数据可保存');
                     return;
                 }
+
+                console.log('使用的 Token (全局变量):', GITHUB_TOKEN);
 
                 const content = JSON.stringify(posts, null, 2);
                 const encodedContent = btoa(unescape(encodeURIComponent(content)));
@@ -942,7 +945,7 @@
                     const putBody = {
                         message: '更新 posts.json (通过博客保存)',
                         content: encodedContent,
-                        branch: 'main'   // 如果您的默认分支是 master，请改为 'master'
+                        branch: 'main'
                     };
                     if (sha) {
                         putBody.sha = sha;
