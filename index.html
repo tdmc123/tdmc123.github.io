@@ -7,7 +7,7 @@
     <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        /* ===== 全局重置 ===== */
+        /* ===== 全局重置 & 暗色变量 ===== */
         * {
             margin: 0;
             padding: 0;
@@ -15,15 +15,15 @@
         }
 
         :root {
-            --bg: #f6f5f4;
-            --card: #ffffff;
-            --border: #e6e4e2;
-            --text: #1c1c1e;
-            --muted: #6e6e73;
-            --accent: #007aff;
-            --accent-hover: #0066d9;
+            --bg: #121212;
+            --card: #1e1e1e;
+            --border: #333333;
+            --text: #e4e4e4;
+            --muted: #aaaaaa;
+            --accent: #4a9eff;
+            --accent-hover: #6aafff;
             --radius: 20px;
-            --shadow: 0 8px 28px rgba(0, 0, 0, 0.05);
+            --shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
         }
 
         body {
@@ -60,7 +60,7 @@
             font-size: 1.9rem;
             font-weight: 700;
             letter-spacing: -0.5px;
-            background: linear-gradient(135deg, #007aff, #5856d6);
+            background: linear-gradient(135deg, #4a9eff, #7a6eff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -68,7 +68,7 @@
 
         .logo i {
             -webkit-text-fill-color: initial;
-            color: #007aff;
+            color: var(--accent);
             margin-right: 4px;
         }
 
@@ -124,13 +124,13 @@
             width: 110px;
             height: 110px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #d9e0eb, #c5cdd9);
+            background: linear-gradient(135deg, #2a2a3a, #3a3a4a);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 3.2rem;
-            color: #3a3a4a;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            color: #c0c0d0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
             user-select: none;
         }
 
@@ -191,7 +191,7 @@
 
         .blog-motto .motto-text {
             font-size: 1.2rem;
-            color: #2c2c2e;
+            color: #d0d0d0;
             line-height: 1.8;
             font-style: italic;
         }
@@ -239,7 +239,8 @@
             padding: 12px 16px;
             border: 1px solid var(--border);
             border-radius: 12px;
-            background: #fafafa;
+            background: #2a2a2a;
+            color: #e4e4e4;
             transition: border 0.2s, box-shadow 0.2s;
             width: 100%;
         }
@@ -249,7 +250,7 @@
         .publish-form select:focus {
             outline: none;
             border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.12);
+            box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.2);
         }
 
         .publish-form textarea {
@@ -271,6 +272,8 @@
         .form-row select {
             flex: 1;
             min-width: 120px;
+            background: #2a2a2a;
+            color: #e4e4e4;
         }
 
         .btn {
@@ -330,7 +333,7 @@
         }
 
         .post-item:hover {
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.8);
             transform: translateY(-2px);
         }
 
@@ -377,17 +380,17 @@
         }
 
         .post-tags .tag {
-            background: #f0eeec;
+            background: #2a2a2a;
             padding: 2px 14px;
             border-radius: 30px;
             font-size: 0.75rem;
             font-weight: 500;
-            color: #4a4a5a;
+            color: #b0b0b0;
         }
 
         .post-body {
             margin: 12px 0 16px;
-            color: #2c2c2e;
+            color: #d0d0d0;
             word-break: break-word;
         }
 
@@ -416,12 +419,12 @@
         }
 
         .post-actions button:hover {
-            background: #f0f0f0;
+            background: #2a2a2a;
             color: var(--accent);
         }
 
         .post-actions .delete-btn:hover {
-            color: #ff3b30;
+            color: #ff5a5a;
         }
 
         /* ===== 评论区域 ===== */
@@ -445,7 +448,8 @@
             border: 1px solid var(--border);
             border-radius: 30px;
             font-size: 0.9rem;
-            background: #fafafa;
+            background: #2a2a2a;
+            color: #e4e4e4;
         }
 
         .comment-section .comment-form input:focus {
@@ -475,7 +479,7 @@
         }
 
         .comment-item {
-            background: #f8f8f8;
+            background: #2a2a2a;
             padding: 10px 16px;
             border-radius: 14px;
             font-size: 0.92rem;
@@ -494,6 +498,7 @@
         .comment-item .comment-text {
             flex: 1;
             min-width: 100px;
+            color: #d0d0d0;
         }
 
         .comment-item .comment-time {
@@ -512,8 +517,8 @@
         }
 
         .comment-item .del-comment:hover {
-            background: #fee;
-            color: #ff3b30;
+            background: #3a2a2a;
+            color: #ff5a5a;
         }
 
         .empty-comment {
@@ -690,16 +695,20 @@
         (function() {
             'use strict';
 
+            // ============================================================
+            // ★★★ GitHub Token（已配置您提供的最新 Token） ★★★
+            // ============================================================
+            const GITHUB_TOKEN = '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';
+            // ============================================================
+
             const STORAGE_KEY = 'tongding_blog_posts';
             const DATA_URL = 'posts.json';
 
-            // ---------- GitHub API 配置（已填入您的 token） ----------
-            const GITHUB_TOKEN = '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';
             const REPO_OWNER = 'tdmc123';
             const REPO_NAME = 'tdmc123.github.io';
             const FILE_PATH = 'posts.json';
 
-            // ---------- DOM 引用 ----------
+            // ---------- DOM ----------
             const postListEl = document.getElementById('postList');
             const publishForm = document.getElementById('publishForm');
             const saveBtn = document.getElementById('saveBtn');
@@ -907,10 +916,10 @@
                 }
 
                 const content = JSON.stringify(posts, null, 2);
-                const encodedContent = btoa(unescape(encodeURIComponent(content))); // Base64 编码
+                const encodedContent = btoa(unescape(encodeURIComponent(content)));
 
                 try {
-                    // 1. 先获取当前文件的 SHA（用于更新）
+                    // 1. 获取文件信息
                     const getUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
                     const getRes = await fetch(getUrl, {
                         headers: {
@@ -924,15 +933,16 @@
                         const fileData = await getRes.json();
                         sha = fileData.sha;
                     } else if (getRes.status !== 404) {
-                        throw new Error('获取文件信息失败');
+                        const errorText = await getRes.text();
+                        throw new Error(`获取文件信息失败 (HTTP ${getRes.status}): ${errorText}`);
                     }
 
                     // 2. 更新或创建文件
                     const putUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
                     const putBody = {
-                        message: '更新 posts.json (通过博客保存功能)',
+                        message: '更新 posts.json (通过博客保存)',
                         content: encodedContent,
-                        branch: 'main'
+                        branch: 'main'   // 如果您的默认分支是 master，请改为 'master'
                     };
                     if (sha) {
                         putBody.sha = sha;
@@ -952,7 +962,7 @@
                         alert('✅ 保存成功！数据已更新到仓库中的 posts.json。');
                     } else {
                         const errorData = await putRes.json();
-                        throw new Error(errorData.message || '未知错误');
+                        throw new Error(errorData.message || '更新文件失败');
                     }
                 } catch (err) {
                     alert('❌ 保存失败：' + err.message);
@@ -994,7 +1004,7 @@
                 document.querySelector('.section-title').scrollIntoView({ behavior: 'smooth' });
             });
 
-            // ---------- 绑定保存按钮 ----------
+            // ---------- 绑定保存 ----------
             saveBtn.addEventListener('click', saveToGitHub);
 
             // ---------- 初始化 ----------
