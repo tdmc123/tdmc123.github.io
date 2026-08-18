@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>铜锭的博客 </title>
+    <title>铜锭的博客</title>
     <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
@@ -169,6 +169,39 @@
         .social-links a:hover {
             color: var(--accent);
             transform: translateY(-2px);
+        }
+
+        /* ===== 关于本站 ===== */
+        #about {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 28px 32px;
+            margin-bottom: 40px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        #about h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #about h2 i {
+            color: var(--accent);
+        }
+
+        #about .about-content {
+            font-size: 1.05rem;
+            color: #2c2c2e;
+            line-height: 1.8;
+        }
+
+        #about .about-content p {
+            margin-bottom: 8px;
         }
 
         /* ===== 发布文章 ===== */
@@ -506,8 +539,12 @@
             gap: 12px;
         }
 
-        .site-footer .heart {
-            color: #ff3b30;
+        .site-footer a {
+            color: var(--accent);
+        }
+
+        .site-footer a:hover {
+            text-decoration: underline;
         }
 
         /* ===== 加载提示 ===== */
@@ -579,7 +616,7 @@
                 <a href="#">首页</a>
                 <a href="#publish">写文章</a>
                 <a href="#">归档</a>
-                <a href="#">关于</a>
+                <a href="#about">关于</a>
             </nav>
         </header>
 
@@ -597,6 +634,18 @@
                     <a href="https://www.codewars.com/users/Tong%20Ding" target="_blank"><i class="fas fa-terminal"></i> CodeWars</a>
                     <a href="http://47.105.107.184/" target="_blank"><i class="fas fa-server"></i> 我的OJ</a>
                 </div>
+            </div>
+        </section>
+
+        <!-- ===== 关于本站 ===== -->
+        <section id="about">
+            <h2><i class="fas fa-info-circle"></i> 关于本站</h2>
+            <div class="about-content">
+                <p>📝 本站是 <strong>铜锭</strong> 的个人博客，创立于 2026 年。</p>
+                <p>💡 主要记录编程学习、算法刷题、OJ 搭建经验，以及生活中的点滴感悟。</p>
+                <p>📂 文章分类涵盖技术、算法、读书、生活、随笔等，欢迎各位朋友浏览交流。</p>
+                <p>🔗 您可以通过上方的社交链接找到我，也可以通过文章评论区与我互动。</p>
+                <p>—— 这是一个独立、纯粹的内容分享空间。</p>
             </div>
         </section>
 
@@ -630,8 +679,7 @@
 
         <!-- ===== 页脚 ===== -->
         <footer class="site-footer">
-            <span>&copy; 2026 铜锭 · 用 <span class="heart">♥</span> 写代码</span>
-            <span>数据存储于 localStorage · 初始数据来自 posts.json</span>
+            <span>&copy; 2026 铜锭 · <a href="https://beian.miit.gov.cn/" target="_blank">无备案</a></span>
         </footer>
 
     </div>
