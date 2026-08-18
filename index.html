@@ -84,6 +84,7 @@
             color: var(--text);
             transition: color 0.2s;
             position: relative;
+            cursor: pointer;
         }
 
         .nav-links a::after {
@@ -171,7 +172,7 @@
             transform: translateY(-2px);
         }
 
-        /* ===== 博客寄语（替换原“关于本站”） ===== */
+        /* ===== 博客寄语 ===== */
         .blog-motto {
             background: var(--card);
             border-radius: var(--radius);
@@ -618,7 +619,7 @@
             <nav class="nav-links">
                 <a href="#">首页</a>
                 <a href="#publish">写文章</a>
-                <a href="#">归档</a>
+                <a id="saveBtn" style="cursor:pointer;">保存</a>
                 <a href="/tdmc123.github.io/about.html">关于</a>
             </nav>
         </header>
@@ -640,13 +641,14 @@
             </div>
         </section>
 
-        <!-- ===== 博客寄语（替换原“关于本站”） ===== -->
+        <!-- ===== 博客寄语 ===== -->
         <section class="blog-motto">
             <div class="motto-icon"><i class="fas fa-quote-left"></i></div>
             <div class="motto-text">
                 这里没有喧嚣，只有一行行代码与一页页文字。<br />
                 每篇文章都是一次对话，每个想法都值得被记录。
             </div>
+            <div class="motto-author">—— 铜锭 · 2026</div>
         </section>
 
         <!-- ===== 发布文章 ===== -->
@@ -689,11 +691,18 @@
             'use strict';
 
             const STORAGE_KEY = 'tongding_blog_posts';
-            const DATA_URL = 'posts.json'; // 外部数据文件
+            const DATA_URL = 'posts.json';
+
+            // ---------- GitHub API 配置（已填入您的 token） ----------
+            const GITHUB_TOKEN = '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';
+            const REPO_OWNER = 'tdmc123';
+            const REPO_NAME = 'tdmc123.github.io';
+            const FILE_PATH = 'posts.json';
 
             // ---------- DOM 引用 ----------
             const postListEl = document.getElementById('postList');
             const publishForm = document.getElementById('publishForm');
+            const saveBtn = document.getElementById('saveBtn');
 
             // ---------- 工具函数 ----------
             function escapeHtml(str) {
@@ -724,14 +733,13 @@
                         }
                     } catch (_) {}
                 }
-                return null; // 表示需要从外部加载
+                return null;
             }
 
             function savePosts(posts) {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
             }
 
-            // 从外部 JSON 加载初始数据并写入 localStorage
             function fetchInitialData() {
                 return fetch(DATA_URL)
                     .then(res => {
@@ -748,7 +756,6 @@
                     })
                     .catch(err => {
                         console.warn('加载 posts.json 失败，使用空数据:', err);
-                        // 如果加载失败，提供一个空数组，让用户可以自行发布
                         const empty = [];
                         savePosts(empty);
                         return empty;
@@ -767,7 +774,6 @@
                     return;
                 }
 
-                // 按日期降序
                 const sorted = [...posts].sort((a, b) => new Date(b.date) - new Date(a.date));
 
                 let html = '';
@@ -821,8 +827,7 @@
 
                 postListEl.innerHTML = html;
 
-                // ---------- 事件绑定 (委托) ----------
-                // 删除文章
+                // ---------- 事件绑定 ----------
                 postListEl.querySelectorAll('.delete-post-btn').forEach(btn => {
                     btn.addEventListener('click', function(e) {
                         const id = Number(this.dataset.id);
@@ -835,7 +840,6 @@
                     });
                 });
 
-                // 提交评论
                 postListEl.querySelectorAll('.comment-submit').forEach(btn => {
                     btn.addEventListener('click', function(e) {
                         const form = this.closest('.comment-form');
@@ -867,7 +871,6 @@
                     });
                 });
 
-                // 删除评论
                 postListEl.querySelectorAll('.del-comment').forEach(btn => {
                     btn.addEventListener('click', function(e) {
                         const postId = Number(this.dataset.postid);
@@ -884,7 +887,6 @@
                     });
                 });
 
-                // 评论输入框回车提交
                 postListEl.querySelectorAll('.comment-text-input').forEach(inp => {
                     inp.addEventListener('keydown', function(e) {
                         if (e.key === 'Enter') {
@@ -894,6 +896,67 @@
                         }
                     });
                 });
+            }
+
+            // ---------- 保存到 GitHub ----------
+            async function saveToGitHub() {
+                const posts = loadPosts();
+                if (!posts) {
+                    alert('暂无数据可保存');
+                    return;
+                }
+
+                const content = JSON.stringify(posts, null, 2);
+                const encodedContent = btoa(unescape(encodeURIComponent(content))); // Base64 编码
+
+                try {
+                    // 1. 先获取当前文件的 SHA（用于更新）
+                    const getUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+                    const getRes = await fetch(getUrl, {
+                        headers: {
+                            'Authorization': `token ${GITHUB_TOKEN}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+
+                    let sha = null;
+                    if (getRes.ok) {
+                        const fileData = await getRes.json();
+                        sha = fileData.sha;
+                    } else if (getRes.status !== 404) {
+                        throw new Error('获取文件信息失败');
+                    }
+
+                    // 2. 更新或创建文件
+                    const putUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+                    const putBody = {
+                        message: '更新 posts.json (通过博客保存功能)',
+                        content: encodedContent,
+                        branch: 'main'
+                    };
+                    if (sha) {
+                        putBody.sha = sha;
+                    }
+
+                    const putRes = await fetch(putUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `token ${GITHUB_TOKEN}`,
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(putBody)
+                    });
+
+                    if (putRes.ok) {
+                        alert('✅ 保存成功！数据已更新到仓库中的 posts.json。');
+                    } else {
+                        const errorData = await putRes.json();
+                        throw new Error(errorData.message || '未知错误');
+                    }
+                } catch (err) {
+                    alert('❌ 保存失败：' + err.message);
+                }
             }
 
             // ---------- 发布文章 ----------
@@ -910,7 +973,6 @@
 
                 let posts = loadPosts();
                 if (!posts) {
-                    // 理论上应该已有数据，若没有则初始化空数组
                     posts = [];
                 }
 
@@ -932,19 +994,19 @@
                 document.querySelector('.section-title').scrollIntoView({ behavior: 'smooth' });
             });
 
+            // ---------- 绑定保存按钮 ----------
+            saveBtn.addEventListener('click', saveToGitHub);
+
             // ---------- 初始化 ----------
             function init() {
                 const existing = loadPosts();
                 if (existing) {
-                    // 已有数据，直接渲染
                     renderPosts(existing);
                 } else {
-                    // 首次使用，从 posts.json 加载
                     postListEl.innerHTML = `<div class="loading-tip"><i class="fas fa-spinner fa-spin"></i> 加载初始数据...</div>`;
                     fetchInitialData().then(data => {
                         renderPosts(data);
                     }).catch(() => {
-                        // 即使失败也渲染空状态
                         renderPosts([]);
                     });
                 }
