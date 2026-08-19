@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>铜锭的博客</title>
-    <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
         /* ===== 全局重置 & 暗色变量 ===== */
@@ -170,6 +169,73 @@
         .social-links a:hover {
             color: var(--accent);
             transform: translateY(-2px);
+        }
+
+        /* ===== Token 设置区域 ===== */
+        .token-settings {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px 24px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .token-settings label {
+            font-weight: 500;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .token-settings input {
+            flex: 1;
+            min-width: 200px;
+            padding: 8px 14px;
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            background: #2a2a2a;
+            color: #e4e4e4;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .token-settings input:focus {
+            border-color: var(--accent);
+        }
+
+        .token-settings .btn-sm {
+            padding: 8px 20px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .token-settings .btn-sm:hover {
+            background: var(--accent-hover);
+        }
+
+        .token-status {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .token-status .valid {
+            color: #4caf50;
+        }
+        .token-status .invalid {
+            color: #f44336;
         }
 
         /* ===== 博客寄语 ===== */
@@ -590,6 +656,13 @@
             .blog-motto .motto-text {
                 font-size: 1.0rem;
             }
+            .token-settings {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .token-settings input {
+                min-width: auto;
+            }
         }
 
         @media (max-width: 480px) {
@@ -610,6 +683,9 @@
             }
             .blog-motto {
                 padding: 20px 16px;
+            }
+            .token-settings {
+                padding: 16px;
             }
         }
     </style>
@@ -644,6 +720,14 @@
                     <a href="http://47.105.107.184/" target="_blank"><i class="fas fa-server"></i> 我的OJ</a>
                 </div>
             </div>
+        </section>
+
+        <!-- ===== Token 设置 ===== -->
+        <section class="token-settings" id="tokenSettings">
+            <label for="tokenInput"><i class="fas fa-key"></i> GitHub Token</label>
+            <input type="text" id="tokenInput" placeholder="粘贴您的 GitHub Personal Access Token (ghp_...)" />
+            <button class="btn-sm" id="saveTokenBtn">保存 Token</button>
+            <span class="token-status" id="tokenStatus">⚪ 未设置</span>
         </section>
 
         <!-- ===== 博客寄语 ===== -->
@@ -692,13 +776,6 @@
     </div>
 
     <script>
-        // ============================================================
-        // ★★★ 使用您的新 Token ★★★
-        // ============================================================
-        const GITHUB_TOKEN = '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';
-        // ============================================================
-
-        // 其余所有功能保持不变
         (function() {
             'use strict';
 
@@ -709,10 +786,62 @@
             const REPO_NAME = 'tdmc123.github.io';
             const FILE_PATH = 'posts.json';
 
-            // ---------- DOM ----------
+            // ---------- DOM 元素 ----------
             const postListEl = document.getElementById('postList');
             const publishForm = document.getElementById('publishForm');
             const saveBtn = document.getElementById('saveBtn');
+            const tokenInput = document.getElementById('tokenInput');
+            const saveTokenBtn = document.getElementById('saveTokenBtn');
+            const tokenStatus = document.getElementById('tokenStatus');
+
+            // ---------- Token 存储 ----------
+            const TOKEN_STORAGE_KEY = 'github_token';
+
+            function getStoredToken() {
+                return localStorage.getItem(TOKEN_STORAGE_KEY) || '';
+            }
+
+            function saveTokenToStorage(token) {
+                localStorage.setItem(TOKEN_STORAGE_KEY, token);
+            }
+
+            // ---------- Token 状态显示 ----------
+            function updateTokenStatus() {
+                const token = getStoredToken();
+                if (token && token.startsWith('ghp_')) {
+                    tokenStatus.innerHTML = `✅ 已设置 Token (${token.slice(0, 8)}...)`;
+                    tokenStatus.className = 'token-status valid';
+                } else if (token) {
+                    tokenStatus.innerHTML = '⚠️ Token 格式无效 (应以 ghp_ 开头)';
+                    tokenStatus.className = 'token-status invalid';
+                } else {
+                    tokenStatus.innerHTML = '⚪ 未设置 Token';
+                    tokenStatus.className = 'token-status';
+                }
+                // 填充输入框
+                tokenInput.value = token;
+            }
+
+            // ---------- 保存 Token 按钮 ----------
+            saveTokenBtn.addEventListener('click', function() {
+                const token = tokenInput.value.trim();
+                if (!token) {
+                    alert('请输入 Token');
+                    return;
+                }
+                if (!token.startsWith('ghp_')) {
+                    alert('Token 格式不正确，请确保以 ghp_ 开头');
+                    return;
+                }
+                saveTokenToStorage(token);
+                updateTokenStatus();
+                // 重新加载页面（确保所有功能使用新 Token）
+                // 但我们可以不刷新，而是让后续操作读取最新存储
+                alert('✅ Token 已保存！现在可以使用“保存”按钮同步数据。');
+            });
+
+            // ---------- 初始化 Token 状态 ----------
+            updateTokenStatus();
 
             // ---------- 工具函数 ----------
             function escapeHtml(str) {
@@ -908,15 +1037,25 @@
                 });
             }
 
-            // ---------- 保存到 GitHub（使用全局的 GITHUB_TOKEN） ----------
+            // ---------- 保存到 GitHub（使用存储的 Token） ----------
             async function saveToGitHub() {
+                const token = getStoredToken();
+                if (!token) {
+                    alert('请先设置 GitHub Token（在页面上方输入框）');
+                    return;
+                }
+                if (!token.startsWith('ghp_')) {
+                    alert('Token 格式不正确，请重新设置');
+                    return;
+                }
+
                 const posts = loadPosts();
                 if (!posts) {
                     alert('暂无数据可保存');
                     return;
                 }
 
-                console.log('使用的 Token (全局变量):', GITHUB_TOKEN);
+                console.log('使用的 Token (从 localStorage):', token);
 
                 const content = JSON.stringify(posts, null, 2);
                 const encodedContent = btoa(unescape(encodeURIComponent(content)));
@@ -926,7 +1065,7 @@
                     const getUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
                     const getRes = await fetch(getUrl, {
                         headers: {
-                            'Authorization': `token ${GITHUB_TOKEN}`,
+                            'Authorization': `token ${token}`,
                             'Accept': 'application/vnd.github.v3+json'
                         }
                     });
@@ -954,7 +1093,7 @@
                     const putRes = await fetch(putUrl, {
                         method: 'PUT',
                         headers: {
-                            'Authorization': `token ${GITHUB_TOKEN}`,
+                            'Authorization': `token ${token}`,
                             'Accept': 'application/vnd.github.v3+json',
                             'Content-Type': 'application/json'
                         },
