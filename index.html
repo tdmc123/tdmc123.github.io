@@ -6,8 +6,7 @@
     <title>铜锭的博客</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        /* 样式与您之前保持一致，省略以节省篇幅，实际请保留完整样式 */
-        /* 您可以直接复制您之前的样式，或使用下面合并的样式（与上一版完全相同） */
+        /* ===== 样式（与之前保持一致，为节省篇幅已压缩） ===== */
         * { margin:0; padding:0; box-sizing:border-box; }
         :root { --bg:#121212; --card:#1e1e1e; --border:#333; --text:#e4e4e4; --muted:#aaa; --accent:#4a9eff; --accent-hover:#6aafff; --radius:20px; --shadow:0 8px 28px rgba(0,0,0,0.6); }
         body { font-family:'Segoe UI',sans-serif; background:var(--bg); color:var(--text); line-height:1.6; padding:0 20px; }
@@ -91,9 +90,6 @@
         .loading-tip { text-align:center; padding:40px 0; color:var(--muted); font-size:1.1rem; }
         @media (max-width:700px) { .profile-card { flex-direction:column; text-align:center; padding:28px 20px; } .social-links { justify-content:center; } .site-header { flex-direction:column; align-items:flex-start; } .nav-links { width:100%; justify-content:flex-start; gap:18px; } .publish-section { padding:20px; } .post-item { padding:18px 20px; } .site-footer { flex-direction:column; text-align:center; } .blog-motto .motto-text { font-size:1.0rem; } .token-settings { flex-direction:column; align-items:stretch; } .token-settings input { min-width:auto; } }
         @media (max-width:480px) { .container { padding:12px 0 30px; } .profile-card { padding:20px 16px; } .avatar { width:80px; height:80px; font-size:2.4rem; } .post-header { flex-direction:column; align-items:flex-start; } .blog-motto { padding:20px 16px; } .token-settings { padding:16px; } }
-        /* 保存中状态提示 */
-        .saving-indicator { display:none; text-align:center; padding:10px; color:var(--muted); font-size:0.9rem; }
-        .saving-indicator.active { display:block; }
     </style>
 </head>
 <body>
@@ -252,12 +248,14 @@
                 return Date.now() + Math.floor(Math.random() * 1000);
             }
 
-            // ---------- 核心保存函数 ----------
+            // ---------- 核心保存函数（带回滚、明确提示） ----------
             async function savePostsToGitHub(dataToSave, rollbackData) {
+                // 如果正在保存，弹出提示并返回
                 if (isSaving) {
-                    console.warn('正在保存中，请勿重复操作');
+                    alert('⏳ 正在保存中，请稍后再试');
                     return false;
                 }
+
                 const token = getStoredToken();
                 if (!token) {
                     alert('请先设置 GitHub Token（在页面上方输入框）');
@@ -317,6 +315,7 @@
                         console.log('✅ 保存成功！');
                         posts = dataToSave; // 更新全局数据
                         renderPosts(posts);
+                        alert('✅ 操作已成功保存到 GitHub！');
                         return true;
                     } else {
                         const errorData = await putRes.json();
@@ -328,7 +327,7 @@
                     if (rollbackData !== undefined) {
                         posts = rollbackData;
                         renderPosts(posts);
-                        alert('❌ 保存失败，已回滚：' + err.message);
+                        alert('❌ 保存失败，已回滚到操作前状态：' + err.message);
                     } else {
                         alert('❌ 保存失败：' + err.message);
                     }
@@ -438,7 +437,6 @@
                     const post = posts.find(p => p.id === postId);
                     if (post && post.comments && post.comments.length > idx) {
                         post.comments.splice(idx, 1);
-                        // 更新界面
                         renderPosts(posts);
                         savePostsToGitHub(posts, oldPosts);
                     }
