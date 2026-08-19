@@ -6,7 +6,7 @@
     <title>铜锭的博客</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        /* ===== 样式（与之前保持一致，为节省篇幅已压缩） ===== */
+        /* ===== 样式（与之前一致，已压缩） ===== */
         * { margin:0; padding:0; box-sizing:border-box; }
         :root { --bg:#121212; --card:#1e1e1e; --border:#333; --text:#e4e4e4; --muted:#aaa; --accent:#4a9eff; --accent-hover:#6aafff; --radius:20px; --shadow:0 8px 28px rgba(0,0,0,0.6); }
         body { font-family:'Segoe UI',sans-serif; background:var(--bg); color:var(--text); line-height:1.6; padding:0 20px; }
@@ -248,9 +248,20 @@
                 return Date.now() + Math.floor(Math.random() * 1000);
             }
 
-            // ---------- 核心保存函数（带回滚、明确提示） ----------
+            // ---------- 从远程加载数据（强制刷新） ----------
+            async function fetchPosts() {
+                const url = DATA_URL + '?t=' + Date.now();
+                const res = await fetch(url, {
+                    headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                if (!Array.isArray(data)) throw new Error('数据格式无效');
+                return data;
+            }
+
+            // ---------- 核心保存函数（带回滚、验证） ----------
             async function savePostsToGitHub(dataToSave, rollbackData) {
-                // 如果正在保存，弹出提示并返回
                 if (isSaving) {
                     alert('⏳ 正在保存中，请稍后再试');
                     return false;
@@ -272,7 +283,8 @@
 
                 try {
                     console.log('🔄 正在保存数据到 GitHub...');
-                    // 获取 SHA
+
+                    // 1. 获取 SHA
                     const getUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
                     const getRes = await fetch(getUrl, {
                         headers: {
@@ -292,7 +304,7 @@
                         console.log('📄 文件不存在，将创建');
                     }
 
-                    // 更新文件
+                    // 2. 更新文件
                     const putUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
                     const putBody = {
                         message: '更新 posts.json (通过博客保存)',
@@ -311,19 +323,31 @@
                         body: JSON.stringify(putBody)
                     });
 
-                    if (putRes.ok) {
-                        console.log('✅ 保存成功！');
-                        posts = dataToSave; // 更新全局数据
+                    if (!putRes.ok) {
+                        const errorData = await putRes.json();
+                        throw new Error(errorData.message || '更新文件失败');
+                    }
+
+                    console.log('✅ PUT 成功，正在验证...');
+
+                    // 3. 验证：重新从远程获取最新数据
+                    const verifyData = await fetchPosts();
+                    // 比较内容是否一致（简单比较 JSON 字符串）
+                    if (JSON.stringify(verifyData) === JSON.stringify(dataToSave)) {
+                        posts = verifyData;
                         renderPosts(posts);
                         alert('✅ 操作已成功保存到 GitHub！');
                         return true;
                     } else {
-                        const errorData = await putRes.json();
-                        throw new Error(errorData.message || '更新文件失败');
+                        // 如果不一致，以远程为准，但弹出警告
+                        console.warn('⚠️ 验证发现数据不一致，以远程为准');
+                        posts = verifyData;
+                        renderPosts(posts);
+                        alert('⚠️ 保存成功，但数据与预期略有差异，已自动同步。');
+                        return true;
                     }
                 } catch (err) {
                     console.error('❌ 保存失败:', err);
-                    // 如果提供了回滚数据，则恢复
                     if (rollbackData !== undefined) {
                         posts = rollbackData;
                         renderPosts(posts);
@@ -408,20 +432,11 @@
                     const id = Number(delBtn.dataset.id);
                     if (!confirm('确定要删除这篇文章吗？')) return;
 
-                    // 乐观更新：先从 UI 移除文章，再保存
-                    const oldPosts = JSON.parse(JSON.stringify(posts)); // 备份
+                    const oldPosts = JSON.parse(JSON.stringify(posts));
                     const newPosts = posts.filter(p => p.id !== id);
                     posts = newPosts;
-                    renderPosts(posts); // 立即更新界面
-
-                    // 异步保存，如果失败则回滚
-                    savePostsToGitHub(newPosts, oldPosts).then(success => {
-                        if (!success) {
-                            // 如果保存失败，回滚已在函数内完成
-                            // 但为了保险，再次确保界面与数据一致
-                            renderPosts(posts);
-                        }
-                    });
+                    renderPosts(posts);
+                    savePostsToGitHub(newPosts, oldPosts);
                     return;
                 }
 
@@ -517,28 +532,17 @@
             });
 
             // ---------- 初始化 ----------
-            function init() {
+            async function init() {
                 postListEl.innerHTML = `<div class="loading-tip"><i class="fas fa-spinner fa-spin"></i> 加载文章中...</div>`;
-                fetch(DATA_URL + '?t=' + Date.now(), {
-                    headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
-                })
-                    .then(res => {
-                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                        return res.json();
-                    })
-                    .then(data => {
-                        if (Array.isArray(data)) {
-                            posts = data;
-                            renderPosts(posts);
-                        } else {
-                            throw new Error('数据格式无效');
-                        }
-                    })
-                    .catch(err => {
-                        console.warn('加载远程数据失败:', err);
-                        posts = [];
-                        renderPosts(posts);
-                    });
+                try {
+                    const data = await fetchPosts();
+                    posts = data;
+                    renderPosts(posts);
+                } catch (err) {
+                    console.warn('加载远程数据失败:', err);
+                    posts = [];
+                    renderPosts(posts);
+                }
             }
 
             init();
