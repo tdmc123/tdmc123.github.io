@@ -779,9 +779,8 @@
         (function() {
             'use strict';
 
-            const STORAGE_KEY = 'tongding_blog_posts';
+            // ---------- 配置 ----------
             const DATA_URL = 'posts.json';
-
             const REPO_OWNER = 'tdmc123';
             const REPO_NAME = 'tdmc123.github.io';
             const FILE_PATH = 'posts.json';
@@ -793,6 +792,9 @@
             const tokenInput = document.getElementById('tokenInput');
             const saveTokenBtn = document.getElementById('saveTokenBtn');
             const tokenStatus = document.getElementById('tokenStatus');
+
+            // ---------- 全局数据 ----------
+            let posts = []; // 当前文章数据（始终与远程同步）
 
             // ---------- Token 存储 ----------
             const TOKEN_STORAGE_KEY = 'github_token';
@@ -818,11 +820,9 @@
                     tokenStatus.innerHTML = '⚪ 未设置 Token';
                     tokenStatus.className = 'token-status';
                 }
-                // 填充输入框
                 tokenInput.value = token;
             }
 
-            // ---------- 保存 Token 按钮 ----------
             saveTokenBtn.addEventListener('click', function() {
                 const token = tokenInput.value.trim();
                 if (!token) {
@@ -838,7 +838,6 @@
                 alert('✅ Token 已保存！现在可以使用“保存”按钮同步数据。');
             });
 
-            // ---------- 初始化 Token 状态 ----------
             updateTokenStatus();
 
             // ---------- 工具函数 ----------
@@ -859,27 +858,9 @@
                 return Date.now() + Math.floor(Math.random() * 1000);
             }
 
-            // ---------- 数据管理 ----------
-            function loadPosts() {
-                const stored = localStorage.getItem(STORAGE_KEY);
-                if (stored) {
-                    try {
-                        const parsed = JSON.parse(stored);
-                        if (Array.isArray(parsed) && parsed.length) {
-                            return parsed;
-                        }
-                    } catch (_) {}
-                }
-                return null;
-            }
-
-            function savePosts(posts) {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
-            }
-
             // ---------- 渲染 ----------
-            function renderPosts(posts) {
-                if (!posts || posts.length === 0) {
+            function renderPosts(postsData) {
+                if (!postsData || postsData.length === 0) {
                     postListEl.innerHTML = `
                         <div style="text-align:center; padding:40px 0; color:var(--muted);">
                             <i class="fas fa-inbox" style="font-size:2rem; display:block; margin-bottom:12px;"></i>
@@ -889,7 +870,7 @@
                     return;
                 }
 
-                const sorted = [...posts].sort((a, b) => new Date(b.date) - new Date(a.date));
+                const sorted = [...postsData].sort((a, b) => new Date(b.date) - new Date(a.date));
 
                 let html = '';
                 sorted.forEach(post => {
@@ -942,16 +923,15 @@
 
                 postListEl.innerHTML = html;
 
-                // ---------- 事件绑定 ----------
+                // ---------- 事件绑定（委托） ----------
                 postListEl.querySelectorAll('.delete-post-btn').forEach(btn => {
                     btn.addEventListener('click', function(e) {
                         const id = Number(this.dataset.id);
                         if (!confirm('确定要删除这篇文章吗？')) return;
-                        let posts = loadPosts();
-                        if (!posts) return;
+                        // 从 posts 中移除
                         posts = posts.filter(p => p.id !== id);
-                        savePosts(posts);
-                        renderPosts(posts);
+                        // 保存到 GitHub
+                        savePostsToGitHub(posts);
                     });
                 });
 
@@ -968,8 +948,6 @@
                             return;
                         }
 
-                        let posts = loadPosts();
-                        if (!posts) return;
                         const post = posts.find(p => p.id === postId);
                         if (!post) {
                             alert('文章不存在');
@@ -981,8 +959,8 @@
                             text: text,
                             time: new Date().toISOString()
                         });
-                        savePosts(posts);
-                        renderPosts(posts);
+                        // 保存到 GitHub
+                        savePostsToGitHub(posts);
                     });
                 });
 
@@ -991,13 +969,10 @@
                         const postId = Number(this.dataset.postid);
                         const idx = Number(this.dataset.commentidx);
                         if (!confirm('删除这条评论？')) return;
-                        let posts = loadPosts();
-                        if (!posts) return;
                         const post = posts.find(p => p.id === postId);
                         if (post && post.comments && post.comments.length > idx) {
                             post.comments.splice(idx, 1);
-                            savePosts(posts);
-                            renderPosts(posts);
+                            savePostsToGitHub(posts);
                         }
                     });
                 });
@@ -1013,8 +988,8 @@
                 });
             }
 
-            // ---------- 保存到 GitHub（使用存储的 Token） ----------
-            async function saveToGitHub() {
+            // ---------- 保存到 GitHub（核心） ----------
+            async function savePostsToGitHub(dataToSave) {
                 const token = getStoredToken();
                 if (!token) {
                     alert('请先设置 GitHub Token（在页面上方输入框）');
@@ -1025,20 +1000,11 @@
                     return;
                 }
 
-                // 从 localStorage 读取当前数据（可能不是最新，但保存时提交最新）
-                const posts = loadPosts();
-                if (!posts) {
-                    alert('暂无数据可保存');
-                    return;
-                }
-
-                console.log('使用的 Token (从 localStorage):', token);
-
-                const content = JSON.stringify(posts, null, 2);
+                const content = JSON.stringify(dataToSave, null, 2);
                 const encodedContent = btoa(unescape(encodeURIComponent(content)));
 
                 try {
-                    // 1. 获取文件信息
+                    // 1. 获取文件信息（获取 SHA）
                     const getUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
                     const getRes = await fetch(getUrl, {
                         headers: {
@@ -1078,7 +1044,11 @@
                     });
 
                     if (putRes.ok) {
-                        alert('✅ 保存成功！数据已更新到仓库中的 posts.json。');
+                        // 保存成功，更新全局 posts 变量（已经是最新，但确保一致）
+                        posts = dataToSave;
+                        // 重新渲染（确保界面与数据一致）
+                        renderPosts(posts);
+                        alert('✅ 保存成功！');
                     } else {
                         const errorData = await putRes.json();
                         throw new Error(errorData.message || '更新文件失败');
@@ -1100,11 +1070,6 @@
                     return;
                 }
 
-                let posts = loadPosts();
-                if (!posts) {
-                    posts = [];
-                }
-
                 const newPost = {
                     id: genId(),
                     title: title,
@@ -1115,54 +1080,48 @@
                 };
 
                 posts.push(newPost);
-                savePosts(posts);
-                renderPosts(posts);
+                // 立即保存到 GitHub，保存成功后会自动重新渲染
+                savePostsToGitHub(posts);
 
+                // 清空表单
                 document.getElementById('postTitle').value = '';
                 document.getElementById('postContent').value = '';
                 document.querySelector('.section-title').scrollIntoView({ behavior: 'smooth' });
             });
 
-            // ---------- 绑定保存 ----------
-            saveBtn.addEventListener('click', saveToGitHub);
+            // ---------- 绑定“保存”按钮（备用） ----------
+            saveBtn.addEventListener('click', function() {
+                if (posts.length === 0) {
+                    alert('暂无数据可保存');
+                    return;
+                }
+                savePostsToGitHub(posts);
+            });
 
-            // ---------- 初始化：优先从远程加载，本地作为备用 ----------
+            // ---------- 初始化：从远程加载数据 ----------
             function init() {
                 postListEl.innerHTML = `<div class="loading-tip"><i class="fas fa-spinner fa-spin"></i> 加载文章中...</div>`;
 
-                // 1. 尝试从远程 posts.json 加载
-                fetch(DATA_URL)
+                fetch(DATA_URL + '?t=' + Date.now(), {
+                    headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+                })
                     .then(res => {
                         if (!res.ok) throw new Error(`HTTP ${res.status}`);
                         return res.json();
                     })
                     .then(data => {
-                        if (Array.isArray(data) && data.length) {
-                            // 远程有数据，保存到本地并渲染
-                            savePosts(data);
-                            renderPosts(data);
+                        if (Array.isArray(data)) {
+                            posts = data;
+                            renderPosts(posts);
                         } else {
-                            // 远程数据为空，尝试本地
-                            const local = loadPosts();
-                            if (local) {
-                                renderPosts(local);
-                            } else {
-                                // 本地也无数据，显示空状态
-                                renderPosts([]);
-                            }
+                            throw new Error('数据格式无效');
                         }
                     })
                     .catch(err => {
-                        console.warn('加载远程失败，使用本地数据:', err);
-                        // 远程加载失败，尝试本地
-                        const local = loadPosts();
-                        if (local) {
-                            renderPosts(local);
-                        } else {
-                            // 本地也无数据，尝试从远程加载但忽略错误（可能文件不存在）
-                            // 但此时已经失败，直接显示空状态
-                            renderPosts([]);
-                        }
+                        console.warn('加载远程数据失败:', err);
+                        // 如果加载失败，显示空状态
+                        posts = [];
+                        renderPosts(posts);
                     });
             }
 
