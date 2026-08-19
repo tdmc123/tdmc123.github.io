@@ -6,7 +6,7 @@
     <title>铜锭的博客</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        /* 样式与之前一致，略去重复（您可直接复制之前的样式） */
+        /* 样式与之前一致，略 */
         * { margin:0; padding:0; box-sizing:border-box; }
         :root { --bg:#121212; --card:#1e1e1e; --border:#333; --text:#e4e4e4; --muted:#aaa; --accent:#4a9eff; --accent-hover:#6aafff; --radius:20px; --shadow:0 8px 28px rgba(0,0,0,0.6); }
         body { font-family:'Segoe UI',sans-serif; background:var(--bg); color:var(--text); line-height:1.6; padding:0 20px; }
@@ -88,8 +88,10 @@
         .site-footer a { color:var(--accent); }
         .site-footer a:hover { text-decoration:underline; }
         .loading-tip { text-align:center; padding:40px 0; color:var(--muted); font-size:1.1rem; }
-        .refresh-btn { background:var(--accent); color:#fff; border:none; padding:6px 16px; border-radius:30px; cursor:pointer; font-size:.8rem; transition:background .2s; }
-        .refresh-btn:hover { background:var(--accent-hover); }
+        .refresh-btn, .reset-btn { background:var(--accent); color:#fff; border:none; padding:6px 16px; border-radius:30px; cursor:pointer; font-size:.8rem; transition:background .2s; }
+        .refresh-btn:hover, .reset-btn:hover { background:var(--accent-hover); }
+        .reset-btn { background:#d32f2f; }
+        .reset-btn:hover { background:#b71c1c; }
         @media (max-width:700px) { .profile-card { flex-direction:column; text-align:center; padding:28px 20px; } .social-links { justify-content:center; } .site-header { flex-direction:column; align-items:flex-start; } .nav-links { width:100%; justify-content:flex-start; gap:18px; } .publish-section { padding:20px; } .post-item { padding:18px 20px; } .site-footer { flex-direction:column; text-align:center; } .blog-motto .motto-text { font-size:1.0rem; } .token-settings { flex-direction:column; align-items:stretch; } .token-settings input { min-width:auto; } }
         @media (max-width:480px) { .container { padding:12px 0 30px; } .profile-card { padding:20px 16px; } .avatar { width:80px; height:80px; font-size:2.4rem; } .post-header { flex-direction:column; align-items:flex-start; } .blog-motto { padding:20px 16px; } .token-settings { padding:16px; } }
     </style>
@@ -107,6 +109,7 @@
                 <a id="saveBtn" style="cursor:pointer;">保存</a>
                 <a href="/tdmc123.github.io/about.html">关于</a>
                 <button class="refresh-btn" id="refreshBtn"><i class="fas fa-sync"></i> 刷新</button>
+                <button class="reset-btn" id="resetBtn"><i class="fas fa-trash"></i> 重置数据</button>
             </nav>
         </header>
 
@@ -189,6 +192,7 @@
             const publishForm = document.getElementById('publishForm');
             const saveBtn = document.getElementById('saveBtn');
             const refreshBtn = document.getElementById('refreshBtn');
+            const resetBtn = document.getElementById('resetBtn');
             const tokenInput = document.getElementById('tokenInput');
             const saveTokenBtn = document.getElementById('saveTokenBtn');
             const tokenStatus = document.getElementById('tokenStatus');
@@ -254,10 +258,8 @@
 
             // ---------- 编码解码（安全 UTF-8） ----------
             function base64Encode(str) {
-                // 使用 TextEncoder 保证 UTF-8 正确编码
                 const encoder = new TextEncoder();
                 const data = encoder.encode(str);
-                // 将 Uint8Array 转为二进制字符串
                 let binary = '';
                 data.forEach(byte => binary += String.fromCharCode(byte));
                 return btoa(binary);
@@ -315,7 +317,6 @@
                     return false;
                 }
 
-                // 验证数据是否可序列化（防止损坏）
                 try {
                     JSON.stringify(dataToSave);
                 } catch (e) {
@@ -330,7 +331,6 @@
                 try {
                     console.log('🔄 正在保存数据到 GitHub...');
 
-                    // 获取 SHA
                     const getUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
                     const getRes = await fetch(getUrl, {
                         headers: {
@@ -350,7 +350,6 @@
                         console.log('📄 文件不存在，将创建');
                     }
 
-                    // 更新文件
                     const putUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
                     const putBody = {
                         message: '更新 posts.json (通过博客保存)',
@@ -375,7 +374,6 @@
                     }
 
                     console.log('✅ 保存成功，正在重新加载...');
-                    // 重新加载最新数据
                     const freshData = await fetchPostsFromAPI();
                     posts = freshData;
                     renderPosts(posts);
@@ -413,7 +411,6 @@
                             </div>
                         `;
                     } else {
-                        // 如果加载失败，尝试从本地备份恢复（如果有）
                         if (posts.length > 0) {
                             renderPosts(posts);
                             alert('⚠️ 加载最新数据失败，已显示本地缓存数据，请检查网络或 Token。');
@@ -441,10 +438,7 @@
 
                 let html = '';
                 sorted.forEach(post => {
-                    // 确保每个 post 有 id
-                    if (!post.id) {
-                        post.id = genId(); // 保险，防止 undefined
-                    }
+                    if (!post.id) post.id = genId();
                     const comments = post.comments || [];
                     let commentsHtml = comments.length === 0 ?
                         `<div class="empty-comment">还没有评论，来说点什么吧</div>` :
@@ -492,9 +486,56 @@
                 postListEl.innerHTML = html;
             }
 
+            // ---------- 重置数据（清空所有文章） ----------
+            async function resetData() {
+                if (!confirm('⚠️ 确定要删除所有文章和评论吗？此操作不可恢复！')) return;
+                const empty = [];
+                const token = getStoredToken();
+                if (!token) { alert('请先设置 Token'); return; }
+                try {
+                    const getUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+                    const getRes = await fetch(getUrl, {
+                        headers: {
+                            'Authorization': `token ${token}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+                    let sha = null;
+                    if (getRes.ok) {
+                        const fileData = await getRes.json();
+                        sha = fileData.sha;
+                    } else if (getRes.status !== 404) {
+                        throw new Error('获取文件信息失败');
+                    }
+                    const encodedContent = base64Encode(JSON.stringify(empty, null, 2));
+                    const putUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+                    const putBody = {
+                        message: '重置数据 (清空)',
+                        content: encodedContent,
+                        branch: 'main'
+                    };
+                    if (sha) putBody.sha = sha;
+                    const putRes = await fetch(putUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `token ${token}`,
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(putBody)
+                    });
+                    if (!putRes.ok) throw new Error('清空失败');
+                    posts = [];
+                    renderPosts(posts);
+                    alert('✅ 数据已重置，现在可以重新发布文章了！');
+                } catch (e) {
+                    alert('❌ 重置失败：' + e.message);
+                }
+            }
+
             // ---------- 事件监听（委托） ----------
             postListEl.addEventListener('click', function(e) {
-                // 删除文章（悲观更新：先保存，成功后移除）
+                // 删除文章
                 const delBtn = e.target.closest('.delete-post-btn');
                 if (delBtn) {
                     const id = Number(delBtn.dataset.id);
@@ -506,13 +547,10 @@
 
                     const oldPosts = JSON.parse(JSON.stringify(posts));
                     const newPosts = posts.filter(p => p.id !== id);
-                    // 先保存，成功后再更新界面
                     savePostsToGitHub(newPosts, oldPosts).then(success => {
                         if (success) {
                             posts = newPosts;
                             renderPosts(posts);
-                        } else {
-                            // 保存失败，已回滚，无需额外操作
                         }
                     });
                     return;
@@ -534,11 +572,8 @@
                     const post = posts.find(p => p.id === postId);
                     if (post && post.comments && post.comments.length > idx) {
                         post.comments.splice(idx, 1);
-                        // 先保存，成功后再更新界面
                         savePostsToGitHub(posts, oldPosts).then(success => {
-                            if (success) {
-                                renderPosts(posts);
-                            }
+                            if (success) renderPosts(posts);
                         });
                     }
                     return;
@@ -569,11 +604,8 @@
                         text: text,
                         time: new Date().toISOString()
                     });
-                    // 先保存，成功后再更新界面
                     savePostsToGitHub(posts, oldPosts).then(success => {
-                        if (success) {
-                            renderPosts(posts);
-                        }
+                        if (success) renderPosts(posts);
                     });
                     return;
                 }
@@ -612,8 +644,6 @@
                     comments: []
                 };
                 posts.push(newPost);
-                // 先渲染（乐观），但保存成功后重新加载会覆盖，所以也可以先不渲染，等保存成功后再渲染
-                // 为了更好的体验，先乐观更新，但保存失败会回滚
                 renderPosts(posts);
                 savePostsToGitHub(posts, oldPosts);
                 document.getElementById('postTitle').value = '';
@@ -621,16 +651,19 @@
                 document.querySelector('.section-title').scrollIntoView({ behavior: 'smooth' });
             });
 
-            // ---------- 保存按钮（手动同步） ----------
+            // ---------- 保存按钮 ----------
             saveBtn.addEventListener('click', function() {
                 if (posts.length === 0) { alert('暂无数据可保存'); return; }
                 savePostsToGitHub(posts);
             });
 
-            // ---------- 强制刷新按钮 ----------
+            // ---------- 刷新按钮 ----------
             refreshBtn.addEventListener('click', function() {
                 loadData();
             });
+
+            // ---------- 重置按钮 ----------
+            resetBtn.addEventListener('click', resetData);
 
             // ---------- 初始化 ----------
             loadData();
