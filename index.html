@@ -835,8 +835,6 @@
                 }
                 saveTokenToStorage(token);
                 updateTokenStatus();
-                // 重新加载页面（确保所有功能使用新 Token）
-                // 但我们可以不刷新，而是让后续操作读取最新存储
                 alert('✅ Token 已保存！现在可以使用“保存”按钮同步数据。');
             });
 
@@ -877,28 +875,6 @@
 
             function savePosts(posts) {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
-            }
-
-            function fetchInitialData() {
-                return fetch(DATA_URL)
-                    .then(res => {
-                        if (!res.ok) throw new Error('网络错误');
-                        return res.json();
-                    })
-                    .then(data => {
-                        if (Array.isArray(data) && data.length) {
-                            savePosts(data);
-                            return data;
-                        } else {
-                            throw new Error('数据格式无效');
-                        }
-                    })
-                    .catch(err => {
-                        console.warn('加载 posts.json 失败，使用空数据:', err);
-                        const empty = [];
-                        savePosts(empty);
-                        return empty;
-                    });
             }
 
             // ---------- 渲染 ----------
@@ -1049,6 +1025,7 @@
                     return;
                 }
 
+                // 从 localStorage 读取当前数据（可能不是最新，但保存时提交最新）
                 const posts = loadPosts();
                 if (!posts) {
                     alert('暂无数据可保存');
@@ -1149,19 +1126,44 @@
             // ---------- 绑定保存 ----------
             saveBtn.addEventListener('click', saveToGitHub);
 
-            // ---------- 初始化 ----------
+            // ---------- 初始化：优先从远程加载，本地作为备用 ----------
             function init() {
-                const existing = loadPosts();
-                if (existing) {
-                    renderPosts(existing);
-                } else {
-                    postListEl.innerHTML = `<div class="loading-tip"><i class="fas fa-spinner fa-spin"></i> 加载初始数据...</div>`;
-                    fetchInitialData().then(data => {
-                        renderPosts(data);
-                    }).catch(() => {
-                        renderPosts([]);
+                postListEl.innerHTML = `<div class="loading-tip"><i class="fas fa-spinner fa-spin"></i> 加载文章中...</div>`;
+
+                // 1. 尝试从远程 posts.json 加载
+                fetch(DATA_URL)
+                    .then(res => {
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                        return res.json();
+                    })
+                    .then(data => {
+                        if (Array.isArray(data) && data.length) {
+                            // 远程有数据，保存到本地并渲染
+                            savePosts(data);
+                            renderPosts(data);
+                        } else {
+                            // 远程数据为空，尝试本地
+                            const local = loadPosts();
+                            if (local) {
+                                renderPosts(local);
+                            } else {
+                                // 本地也无数据，显示空状态
+                                renderPosts([]);
+                            }
+                        }
+                    })
+                    .catch(err => {
+                        console.warn('加载远程失败，使用本地数据:', err);
+                        // 远程加载失败，尝试本地
+                        const local = loadPosts();
+                        if (local) {
+                            renderPosts(local);
+                        } else {
+                            // 本地也无数据，尝试从远程加载但忽略错误（可能文件不存在）
+                            // 但此时已经失败，直接显示空状态
+                            renderPosts([]);
+                        }
                     });
-                }
             }
 
             init();
