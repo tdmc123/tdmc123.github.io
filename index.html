@@ -6,7 +6,7 @@
     <title>铜锭的博客</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        /* ===== 样式（与之前一致，已压缩） ===== */
+        /* ===== 样式（与之前一致） ===== */
         * { margin:0; padding:0; box-sizing:border-box; }
         :root { --bg:#121212; --card:#1e1e1e; --border:#333; --text:#e4e4e4; --muted:#aaa; --accent:#4a9eff; --accent-hover:#6aafff; --radius:20px; --shadow:0 8px 28px rgba(0,0,0,0.6); }
         body { font-family:'Segoe UI',sans-serif; background:var(--bg); color:var(--text); line-height:1.6; padding:0 20px; }
@@ -177,7 +177,6 @@
             'use strict';
 
             // ---------- 配置 ----------
-            const DATA_URL = 'posts.json';
             const REPO_OWNER = 'tdmc123';
             const REPO_NAME = 'tdmc123.github.io';
             const FILE_PATH = 'posts.json';
@@ -248,19 +247,33 @@
                 return Date.now() + Math.floor(Math.random() * 1000);
             }
 
-            // ---------- 从远程加载数据（强制刷新） ----------
-            async function fetchPosts() {
-                const url = DATA_URL + '?t=' + Date.now();
+            // ---------- 通过 GitHub API 获取数据（无缓存） ----------
+            async function fetchPostsFromAPI() {
+                const token = getStoredToken();
+                if (!token) throw new Error('未设置 Token');
+                const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
                 const res = await fetch(url, {
-                    headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
                 });
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                if (res.status === 404) {
+                    return []; // 文件不存在，返回空数组
+                }
+                if (!res.ok) {
+                    const err = await res.text();
+                    throw new Error(`获取数据失败 (${res.status}): ${err}`);
+                }
                 const data = await res.json();
-                if (!Array.isArray(data)) throw new Error('数据格式无效');
-                return data;
+                // 文件内容为 Base64 编码
+                const content = atob(data.content);
+                const parsed = JSON.parse(content);
+                if (!Array.isArray(parsed)) throw new Error('数据格式无效');
+                return parsed;
             }
 
-            // ---------- 核心保存函数（带回滚、验证） ----------
+            // ---------- 核心保存函数（直接通过 API 更新） ----------
             async function savePostsToGitHub(dataToSave, rollbackData) {
                 if (isSaving) {
                     alert('⏳ 正在保存中，请稍后再试');
@@ -328,24 +341,11 @@
                         throw new Error(errorData.message || '更新文件失败');
                     }
 
-                    console.log('✅ PUT 成功，正在验证...');
-
-                    // 3. 验证：重新从远程获取最新数据
-                    const verifyData = await fetchPosts();
-                    // 比较内容是否一致（简单比较 JSON 字符串）
-                    if (JSON.stringify(verifyData) === JSON.stringify(dataToSave)) {
-                        posts = verifyData;
-                        renderPosts(posts);
-                        alert('✅ 操作已成功保存到 GitHub！');
-                        return true;
-                    } else {
-                        // 如果不一致，以远程为准，但弹出警告
-                        console.warn('⚠️ 验证发现数据不一致，以远程为准');
-                        posts = verifyData;
-                        renderPosts(posts);
-                        alert('⚠️ 保存成功，但数据与预期略有差异，已自动同步。');
-                        return true;
-                    }
+                    console.log('✅ 保存成功！');
+                    posts = dataToSave;
+                    renderPosts(posts);
+                    alert('✅ 操作已成功保存到 GitHub！');
+                    return true;
                 } catch (err) {
                     console.error('❌ 保存失败:', err);
                     if (rollbackData !== undefined) {
@@ -531,17 +531,26 @@
                 savePostsToGitHub(posts);
             });
 
-            // ---------- 初始化 ----------
+            // ---------- 初始化：从 GitHub API 加载 ----------
             async function init() {
                 postListEl.innerHTML = `<div class="loading-tip"><i class="fas fa-spinner fa-spin"></i> 加载文章中...</div>`;
                 try {
-                    const data = await fetchPosts();
+                    const data = await fetchPostsFromAPI();
                     posts = data;
                     renderPosts(posts);
                 } catch (err) {
-                    console.warn('加载远程数据失败:', err);
-                    posts = [];
-                    renderPosts(posts);
+                    console.warn('加载数据失败:', err);
+                    if (err.message === '未设置 Token') {
+                        postListEl.innerHTML = `
+                            <div style="text-align:center; padding:40px 0; color:var(--muted);">
+                                <i class="fas fa-exclamation-triangle" style="font-size:2rem; display:block; margin-bottom:12px; color:#ff9800;"></i>
+                                请先在上方设置 GitHub Token
+                            </div>
+                        `;
+                    } else {
+                        posts = [];
+                        renderPosts(posts);
+                    }
                 }
             }
 
