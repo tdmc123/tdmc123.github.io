@@ -30,7 +30,7 @@
         .social-links a { color:var(--muted); transition:color .2s,transform .15s; display:inline-flex; align-items:center; gap:6px; font-size:.95rem; }
         .social-links a i { font-size:1.3rem; }
         .social-links a:hover { color:var(--accent); transform:translateY(-2px); }
-        .token-settings { background:var(--card); border-radius:var(--radius); padding:20px 24px; margin-bottom:30px; border:1px solid var(--border); box-shadow:var(--shadow); display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
+        .token-settings { background:var(--card); border-radius:var(--radius); padding:20px 24px; margin-bottom:20px; border:1px solid var(--border); box-shadow:var(--shadow); display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
         .token-settings label { font-weight:500; color:var(--muted); display:flex; align-items:center; gap:6px; }
         .token-settings input { flex:1; min-width:200px; padding:8px 14px; border:1px solid var(--border); border-radius:30px; background:#2a2a2a; color:#e4e4e4; font-size:.9rem; outline:none; transition:border-color .2s; }
         .token-settings input:focus { border-color:var(--accent); }
@@ -102,6 +102,9 @@
         .single-post.active { display:block; }
         .post-list-container { display:block; }
         .post-list-container.hidden { display:none; }
+        .permission-badge { font-size:0.7rem; margin-left:8px; padding:2px 10px; border-radius:12px; background:#555; color:#fff; }
+        .permission-badge.admin { background:#4caf50; }
+        .permission-badge.guest { background:#f44336; }
         @media (max-width:700px) { .profile-card { flex-direction:column; text-align:center; padding:28px 20px; } .social-links { justify-content:center; } .site-header { flex-direction:column; align-items:flex-start; } .nav-links { width:100%; justify-content:flex-start; gap:18px; } .publish-section { padding:20px; } .post-item { padding:0; } .post-content { padding:16px; } .post-list { grid-template-columns:1fr; } .site-footer { flex-direction:column; text-align:center; } .blog-motto .motto-text { font-size:1.0rem; } .token-settings { flex-direction:column; align-items:stretch; } .token-settings input { min-width:auto; } }
         @media (max-width:480px) { .container { padding:12px 0 30px; } .profile-card { padding:20px 16px; } .avatar { width:80px; height:80px; font-size:2.4rem; } .post-header { flex-direction:column; align-items:flex-start; } .blog-motto { padding:20px 16px; } .token-settings { padding:16px; } .post-thumbnail { height:140px; } }
     </style>
@@ -119,7 +122,7 @@
                 <a id="saveBtn" style="cursor:pointer;">保存</a>
                 <a href="/about">关于</a>
                 <button class="refresh-btn" id="refreshBtn"><i class="fas fa-sync"></i> 刷新</button>
-                <!-- 已移除“全部文章”按钮 -->
+                <span id="roleBadge" class="permission-badge">⚪ 未验证</span>
             </nav>
         </header>
 
@@ -138,12 +141,19 @@
             </div>
         </section>
 
-        <!-- ===== Token 设置 ===== -->
+        <!-- ===== Token 与密码设置 ===== -->
         <section class="token-settings" id="tokenSettings">
             <label for="tokenInput"><i class="fas fa-key"></i> GitHub Token</label>
             <input type="text" id="tokenInput" placeholder="粘贴您的 GitHub Personal Access Token (ghp_...)" />
             <button class="btn-sm" id="saveTokenBtn">保存 Token</button>
             <span class="token-status" id="tokenStatus">⚪ 未设置</span>
+        </section>
+
+        <section class="token-settings" id="passwordSettings">
+            <label for="passwordInput"><i class="fas fa-lock"></i> 密码</label>
+            <input type="password" id="passwordInput" placeholder="输入密码（访客123456，管理258088）" />
+            <button class="btn-sm" id="savePasswordBtn">验证密码</button>
+            <span class="token-status" id="passwordStatus">⚪ 未验证</span>
         </section>
 
         <!-- ===== 博客寄语 ===== -->
@@ -156,7 +166,7 @@
             <div class="motto-author">—— 铜锭 · 2026</div>
         </section>
 
-        <!-- ===== 发布文章（仅在列表页显示） ===== -->
+        <!-- ===== 发布文章 ===== -->
         <section class="publish-section" id="publish">
             <h2><i class="fas fa-feather-alt"></i> 发布新文章</h2>
             <form class="publish-form" id="publishForm">
@@ -178,7 +188,7 @@
             </form>
         </section>
 
-        <!-- ===== 文章列表（卡片网格） ===== -->
+        <!-- ===== 文章列表 ===== -->
         <div id="postListContainer" class="post-list-container">
             <div class="section-title"><i class="fas fa-pen-fancy"></i> 全部文章</div>
             <div class="post-list" id="postList">
@@ -210,6 +220,10 @@
             const REPO_NAME = 'tdmc123.github.io';
             const FILE_PATH = 'posts.json';
 
+            // ---------- 密码硬编码 ----------
+            const PASSWORD_GUEST = '123456';
+            const PASSWORD_ADMIN = '258088';
+
             // ---------- DOM 元素 ----------
             const postListEl = document.getElementById('postList');
             const publishForm = document.getElementById('publishForm');
@@ -218,6 +232,10 @@
             const tokenInput = document.getElementById('tokenInput');
             const saveTokenBtn = document.getElementById('saveTokenBtn');
             const tokenStatus = document.getElementById('tokenStatus');
+            const passwordInput = document.getElementById('passwordInput');
+            const savePasswordBtn = document.getElementById('savePasswordBtn');
+            const passwordStatus = document.getElementById('passwordStatus');
+            const roleBadge = document.getElementById('roleBadge');
             const postListContainer = document.getElementById('postListContainer');
             const singlePostContainer = document.getElementById('singlePostContainer');
             const singlePostContent = document.getElementById('singlePostContent');
@@ -228,9 +246,11 @@
             let posts = [];
             let isSaving = false;
             let currentPostId = null;
+            let isAdmin = false; // 权限标志
 
             // ---------- Token 存储 ----------
             const TOKEN_STORAGE_KEY = 'github_token';
+            const PASSWORD_STORAGE_KEY = 'user_password';
 
             function getStoredToken() {
                 return localStorage.getItem(TOKEN_STORAGE_KEY) || '';
@@ -255,16 +275,68 @@
                 tokenInput.value = token;
             }
 
-            saveTokenBtn.addEventListener('click', function() {
-                const token = tokenInput.value.trim();
-                if (!token) { alert('请输入 Token'); return; }
-                if (!token.startsWith('ghp_')) { alert('Token 格式不正确，请确保以 ghp_ 开头'); return; }
-                saveTokenToStorage(token);
-                updateTokenStatus();
-                alert('✅ Token 已保存！');
-                loadData();
+            // ---------- 密码管理 ----------
+            function getStoredPassword() {
+                return localStorage.getItem(PASSWORD_STORAGE_KEY) || '';
+            }
+
+            function savePasswordToStorage(password) {
+                localStorage.setItem(PASSWORD_STORAGE_KEY, password);
+            }
+
+            function verifyPassword(password) {
+                if (password === PASSWORD_ADMIN) {
+                    return 'admin';
+                } else if (password === PASSWORD_GUEST) {
+                    return 'guest';
+                } else {
+                    return null;
+                }
+            }
+
+            function updatePasswordStatus() {
+                const stored = getStoredPassword();
+                const role = verifyPassword(stored);
+                if (role === 'admin') {
+                    passwordStatus.innerHTML = '✅ 管理员';
+                    passwordStatus.className = 'token-status valid';
+                    roleBadge.textContent = '👑 管理员';
+                    roleBadge.className = 'permission-badge admin';
+                    isAdmin = true;
+                } else if (role === 'guest') {
+                    passwordStatus.innerHTML = '👤 访客';
+                    passwordStatus.className = 'token-status';
+                    roleBadge.textContent = '👤 访客';
+                    roleBadge.className = 'permission-badge guest';
+                    isAdmin = false;
+                } else {
+                    passwordStatus.innerHTML = '⚪ 未验证或密码错误';
+                    passwordStatus.className = 'token-status';
+                    roleBadge.textContent = '⚪ 未验证';
+                    roleBadge.className = 'permission-badge';
+                    isAdmin = false;
+                }
+                passwordInput.value = stored;
+            }
+
+            // ---------- 保存密码按钮 ----------
+            savePasswordBtn.addEventListener('click', function() {
+                const password = passwordInput.value.trim();
+                if (!password) {
+                    alert('请输入密码');
+                    return;
+                }
+                const role = verifyPassword(password);
+                if (!role) {
+                    alert('密码错误！');
+                    return;
+                }
+                savePasswordToStorage(password);
+                updatePasswordStatus();
+                // 重新渲染视图以更新删除按钮可见性
+                renderView();
+                alert(`✅ 验证成功！当前身份：${role === 'admin' ? '管理员' : '访客'}`);
             });
-            updateTokenStatus();
 
             // ---------- 工具函数 ----------
             function escapeHtml(str) {
@@ -442,7 +514,7 @@
                 }
             }
 
-            // ---------- 显示列表（卡片网格） ----------
+            // ---------- 显示列表 ----------
             function showList() {
                 postListContainer.style.display = 'block';
                 singlePostContainer.classList.remove('active');
@@ -494,9 +566,13 @@
                     const author = post.author ? escapeHtml(post.author) : '匿名';
                     const comments = post.comments || [];
                     const excerpt = post.content.substring(0, 120) + (post.content.length > 120 ? '...' : '');
-                    // 随机图片 URL（基于文章 ID 保证每次刷新同一篇文章看到同一张图）
                     const imgId = post.id % 1000;
                     const imgUrl = `https://picsum.photos/seed/${imgId}/400/200`;
+
+                    // 只有管理员才显示删除按钮
+                    const deleteBtnHtml = isAdmin ?
+                        `<button class="delete-post-btn" data-id="${post.id}"><i class="fas fa-trash-alt"></i> 删除</button>` :
+                        '';
 
                     html += `
                         <div class="post-item" data-postid="${post.id}" onclick="window.location='?post=${post.id}'">
@@ -515,7 +591,7 @@
                                 </div>
                                 <div class="post-excerpt">${escapeHtml(excerpt)}</div>
                                 <div class="post-actions">
-                                    <button class="delete-post-btn" data-id="${post.id}"><i class="fas fa-trash-alt"></i> 删除</button>
+                                    ${deleteBtnHtml}
                                 </div>
                             </div>
                         </div>
@@ -530,14 +606,20 @@
                 const comments = post.comments || [];
                 let commentsHtml = comments.length === 0 ?
                     `<div class="empty-comment">还没有评论，来说点什么吧</div>` :
-                    comments.map((c, idx) => `
-                        <div class="comment-item" data-postid="${post.id}" data-commentidx="${idx}">
-                            <span class="comment-author">${escapeHtml(c.author)}</span>
-                            <span class="comment-text">${escapeHtml(c.text)}</span>
-                            <span class="comment-time">${formatTime(c.time)}</span>
-                            <button class="del-comment" title="删除评论"><i class="fas fa-times"></i></button>
-                        </div>
-                    `).join('');
+                    comments.map((c, idx) => {
+                        // 评论删除按钮仅管理员可见
+                        const delCommentBtn = isAdmin ?
+                            `<button class="del-comment" title="删除评论"><i class="fas fa-times"></i></button>` :
+                            '';
+                        return `
+                            <div class="comment-item" data-postid="${post.id}" data-commentidx="${idx}">
+                                <span class="comment-author">${escapeHtml(c.author)}</span>
+                                <span class="comment-text">${escapeHtml(c.text)}</span>
+                                <span class="comment-time">${formatTime(c.time)}</span>
+                                ${delCommentBtn}
+                            </div>
+                        `;
+                    }).join('');
 
                 const commentFormHtml = `
                     <div class="comment-form" data-postid="${post.id}">
@@ -546,6 +628,10 @@
                         <button class="btn-sm comment-submit">评论</button>
                     </div>
                 `;
+
+                const deleteBtnHtml = isAdmin ?
+                    `<button class="delete-post-btn" data-id="${post.id}"><i class="fas fa-trash-alt"></i> 删除文章</button>` :
+                    '';
 
                 singlePostContent.innerHTML = `
                     <div class="post-header" style="padding:0 0 16px 0;">
@@ -559,7 +645,7 @@
                     </div>
                     <div class="post-body" style="font-size:1.1rem; line-height:1.8; padding:0 0 16px 0;">${escapeHtml(post.content)}</div>
                     <div class="post-actions" style="border-top:1px solid var(--border); padding-top:16px; margin-top:8px;">
-                        <button class="delete-post-btn" data-id="${post.id}"><i class="fas fa-trash-alt"></i> 删除文章</button>
+                        ${deleteBtnHtml}
                     </div>
                     <div class="comment-section" style="margin-top:20px;">
                         ${commentFormHtml}
@@ -572,10 +658,14 @@
 
             // ---------- 事件委托 ----------
             document.addEventListener('click', function(e) {
-                // 删除文章
+                // 删除文章（仅管理员可操作，但按钮只对管理员显示，为保证安全再次判断）
                 const delBtn = e.target.closest('.delete-post-btn');
                 if (delBtn) {
-                    e.stopPropagation(); // 防止触发卡片点击
+                    if (!isAdmin) {
+                        alert('权限不足，只有管理员可以删除');
+                        return;
+                    }
+                    e.stopPropagation();
                     const id = Number(delBtn.dataset.id);
                     if (isNaN(id) || id === 0) { alert('无法识别该文章'); return; }
                     if (!confirm('确定要删除这篇文章吗？')) return;
@@ -594,9 +684,13 @@
                     return;
                 }
 
-                // 删除评论
+                // 删除评论（仅管理员）
                 const delCommentBtn = e.target.closest('.del-comment');
                 if (delCommentBtn) {
+                    if (!isAdmin) {
+                        alert('权限不足，只有管理员可以删除评论');
+                        return;
+                    }
                     const commentItem = delCommentBtn.closest('.comment-item');
                     if (!commentItem) return;
                     const postId = Number(commentItem.dataset.postid);
@@ -612,7 +706,7 @@
                     return;
                 }
 
-                // 提交评论
+                // 提交评论（所有人均可）
                 const submitBtn = e.target.closest('.comment-submit');
                 if (submitBtn) {
                     const form = submitBtn.closest('.comment-form');
@@ -681,13 +775,30 @@
                 loadData();
             });
 
+            // ---------- Token 保存 ----------
+            saveTokenBtn.addEventListener('click', function() {
+                const token = tokenInput.value.trim();
+                if (!token) { alert('请输入 Token'); return; }
+                if (!token.startsWith('ghp_')) { alert('Token 格式不正确，请确保以 ghp_ 开头'); return; }
+                saveTokenToStorage(token);
+                updateTokenStatus();
+                alert('✅ Token 已保存！');
+                loadData();
+            });
+
             // ---------- 浏览器回退支持 ----------
             window.addEventListener('popstate', function() {
                 renderView();
             });
 
             // ---------- 初始化 ----------
-            loadData();
+            function init() {
+                updateTokenStatus();
+                updatePasswordStatus();
+                loadData();
+            }
+
+            init();
 
         })();
     </script>
