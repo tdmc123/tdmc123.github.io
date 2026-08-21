@@ -6,7 +6,8 @@
     <title>铜锭的博客</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        /* ===== 全局重置 & 暗色变量 ===== */
+        /* 样式与之前完全一致，不再重复粘贴，请使用您现有的完整样式 */
+        /* 实际使用时，请将您现有的 <style> 部分完整保留 */
         * { margin:0; padding:0; box-sizing:border-box; }
         :root { --bg:#121212; --card:#1e1e1e; --border:#333; --text:#e4e4e4; --muted:#aaa; --accent:#4a9eff; --accent-hover:#6aafff; --radius:20px; --shadow:0 8px 28px rgba(0,0,0,0.6); }
         body { font-family:'Segoe UI',sans-serif; background:var(--bg); color:var(--text); line-height:1.6; padding:0 20px; }
@@ -147,7 +148,7 @@
             <span class="token-status" id="tokenStatus">⚪ 未设置</span>
         </section>
 
-        <!-- ===== 密码设置（标签改为“访问密码”） ===== -->
+        <!-- ===== 密码设置 ===== -->
         <section class="token-settings password-settings" id="passwordSettings">
             <label for="passwordInput"><i class="fas fa-lock"></i> 访问密码</label>
             <input type="password" id="passwordInput" placeholder="请输入密码" />
@@ -218,6 +219,7 @@
             const REPO_OWNER = 'tdmc123';
             const REPO_NAME = 'tdmc123.github.io';
             const FILE_PATH = 'posts.json';
+            const DATA_URL = 'posts.json';
 
             // ---------- DOM 元素 ----------
             const postListEl = document.getElementById('postList');
@@ -242,7 +244,7 @@
             let posts = [];
             let isSaving = false;
             let currentPostId = null;
-            let userRole = null; // null: 未验证, 'guest': 访客, 'admin': 管理员
+            let userRole = null;
 
             // ---------- Token 存储 ----------
             const TOKEN_STORAGE_KEY = 'github_token';
@@ -256,9 +258,13 @@
                 localStorage.setItem(TOKEN_STORAGE_KEY, token);
             }
 
+            function isValidToken(token) {
+                return token && token.startsWith('ghp_') && token.length > 10;
+            }
+
             function updateTokenStatus() {
                 const token = getStoredToken();
-                if (token && token.startsWith('ghp_')) {
+                if (isValidToken(token)) {
                     tokenStatus.innerHTML = `✅ 已设置 Token (${token.slice(0, 8)}...)`;
                     tokenStatus.className = 'token-status valid';
                 } else if (token) {
@@ -274,7 +280,7 @@
             saveTokenBtn.addEventListener('click', function() {
                 const token = tokenInput.value.trim();
                 if (!token) { alert('请输入 Token'); return; }
-                if (!token.startsWith('ghp_')) { alert('Token 格式不正确，请确保以 ghp_ 开头'); return; }
+                if (!isValidToken(token)) { alert('Token 格式不正确，请确保以 ghp_ 开头且长度正确'); return; }
                 saveTokenToStorage(token);
                 updateTokenStatus();
                 alert('✅ Token 已保存！');
@@ -310,13 +316,11 @@
                     passwordStatus.innerHTML = '✅ 访客';
                     passwordStatus.className = 'token-status valid';
                 } else {
-                    // 未验证
                     roleBadge.textContent = '🔒 未验证';
                     roleBadge.style.background = '#888';
                     passwordStatus.innerHTML = '⚪ 未输入密码';
                     passwordStatus.className = 'token-status';
                 }
-                // 重新渲染视图（因为删除按钮显示与否依赖角色）
                 renderView();
             }
 
@@ -329,11 +333,9 @@
                         passwordInput.value = storedPwd;
                         return;
                     } else {
-                        // 密码无效，清空存储
                         localStorage.removeItem(PASSWORD_STORAGE_KEY);
                     }
                 }
-                // 默认未验证
                 updateRoleUI(null);
                 passwordInput.value = '';
             }
@@ -416,12 +418,8 @@
                     return false;
                 }
                 const token = getStoredToken();
-                if (!token) {
-                    alert('请先设置 GitHub Token（在页面上方输入框）');
-                    return false;
-                }
-                if (!token.startsWith('ghp_')) {
-                    alert('Token 格式不正确，请重新设置');
+                if (!isValidToken(token)) {
+                    alert('请先设置有效的 GitHub Token（在页面上方输入框）');
                     return false;
                 }
                 try { JSON.stringify(dataToSave); } catch (e) { alert('数据格式错误，无法保存'); return false; }
@@ -488,33 +486,86 @@
                 }
             }
 
-            // ---------- 加载数据 ----------
+            // ---------- 核心修改：loadData 优先从远程公开加载 ----------
+            function loadPostsFromLocal() {
+                const stored = localStorage.getItem('tongding_blog_posts');
+                if (stored) {
+                    try {
+                        const parsed = JSON.parse(stored);
+                        if (Array.isArray(parsed) && parsed.length) {
+                            return parsed;
+                        }
+                    } catch (_) {}
+                }
+                return null;
+            }
+
+            function savePostsToLocal(data) {
+                localStorage.setItem('tongding_blog_posts', JSON.stringify(data));
+            }
+
             async function loadData() {
                 const token = getStoredToken();
-                if (!token) {
+
+                // 1. 优先从远程公开 URL 加载（无需 Token）
+                try {
+                    const res = await fetch(DATA_URL + '?t=' + Date.now(), {
+                        headers: { 'Cache-Control': 'no-cache' }
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (Array.isArray(data) && data.length) {
+                            posts = data;
+                            // 如果有有效 Token，同步到本地缓存
+                            if (isValidToken(token)) {
+                                savePostsToLocal(posts);
+                            }
+                            renderView();
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('远程公开加载失败:', e);
+                }
+
+                // 2. 远程无数据或加载失败，尝试本地缓存
+                const local = loadPostsFromLocal();
+                if (local && local.length) {
+                    posts = local;
+                    renderView();
+                    return;
+                }
+
+                // 3. 如果 Token 无效，显示提示（而不是“没有文章”）
+                if (!isValidToken(token)) {
                     postListEl.innerHTML = `
-                        <div style="text-align:center; padding:40px 0; color:var(--muted);">
-                            <i class="fas fa-exclamation-triangle" style="font-size:2rem; display:block; margin-bottom:12px; color:#ff9800;"></i>
-                            请先在上方设置 GitHub Token
+                        <div style="text-align:center; padding:40px 20px; background:#2a1a1a; border:2px solid #ff9800; border-radius:12px; color:#ff9800;">
+                            <i class="fas fa-key" style="font-size:2.5rem; display:block; margin-bottom:12px;"></i>
+                            <strong>请先在上方输入有效的 GitHub Token</strong>
+                            <p style="font-size:0.9rem; color:#aaa; margin-top:8px;">Token 用于同步文章和评论到你的 GitHub 仓库</p>
                         </div>
                     `;
                     return;
                 }
-                postListEl.innerHTML = `<div class="loading-tip"><i class="fas fa-spinner fa-spin"></i> 加载文章中...</div>`;
-                try {
-                    const data = await fetchPostsFromAPI(token);
-                    posts = data;
-                    renderView();
-                } catch (err) {
-                    console.warn('加载数据失败:', err);
-                    if (posts.length > 0) {
-                        renderView();
-                        alert('⚠️ 加载最新数据失败，已显示本地缓存数据，请检查网络或 Token。');
-                    } else {
-                        posts = [];
-                        renderView();
+
+                // 4. 有 Token 但远程无数据，尝试用 Token 加载
+                if (isValidToken(token)) {
+                    try {
+                        const data = await fetchPostsFromAPI(token);
+                        if (Array.isArray(data) && data.length) {
+                            posts = data;
+                            savePostsToLocal(posts);
+                            renderView();
+                            return;
+                        }
+                    } catch (e) {
+                        console.warn('Token 加载失败:', e);
                     }
                 }
+
+                // 5. 什么都没有
+                posts = [];
+                renderView();
             }
 
             // ---------- 渲染视图 ----------
@@ -582,7 +633,6 @@
                     const excerpt = post.content.substring(0, 120) + (post.content.length > 120 ? '...' : '');
                     const imgId = post.id % 1000;
                     const imgUrl = `https://picsum.photos/seed/${imgId}/400/200`;
-                    // 只有管理员可见删除按钮
                     const deleteBtnHtml = (userRole === 'admin') ?
                         `<button class="delete-post-btn" data-id="${post.id}"><i class="fas fa-trash-alt"></i> 删除</button>` :
                         '';
@@ -793,8 +843,8 @@
             });
 
             // ---------- 初始化 ----------
-            initPassword(); // 先加载密码状态
-            loadData();     // 再加载文章数据
+            initPassword();
+            loadData();
 
         })();
     </script>
