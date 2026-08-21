@@ -6,8 +6,7 @@
     <title>铜锭的博客</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        /* 样式与之前完全一致，不再重复粘贴，请使用您现有的完整样式 */
-        /* 实际使用时，请将您现有的 <style> 部分完整保留 */
+        /* ===== 全局重置 & 暗色变量 ===== */
         * { margin:0; padding:0; box-sizing:border-box; }
         :root { --bg:#121212; --card:#1e1e1e; --border:#333; --text:#e4e4e4; --muted:#aaa; --accent:#4a9eff; --accent-hover:#6aafff; --radius:20px; --shadow:0 8px 28px rgba(0,0,0,0.6); }
         body { font-family:'Segoe UI',sans-serif; background:var(--bg); color:var(--text); line-height:1.6; padding:0 20px; }
@@ -219,7 +218,6 @@
             const REPO_OWNER = 'tdmc123';
             const REPO_NAME = 'tdmc123.github.io';
             const FILE_PATH = 'posts.json';
-            const DATA_URL = 'posts.json';
 
             // ---------- DOM 元素 ----------
             const postListEl = document.getElementById('postList');
@@ -234,7 +232,6 @@
             const singlePostContent = document.getElementById('singlePostContent');
             const backToList = document.getElementById('backToList');
             const homeLink = document.getElementById('homeLink');
-            // 密码相关
             const passwordInput = document.getElementById('passwordInput');
             const savePasswordBtn = document.getElementById('savePasswordBtn');
             const passwordStatus = document.getElementById('passwordStatus');
@@ -244,7 +241,7 @@
             let posts = [];
             let isSaving = false;
             let currentPostId = null;
-            let userRole = null;
+            let userRole = null; // null, 'guest', 'admin'
 
             // ---------- Token 存储 ----------
             const TOKEN_STORAGE_KEY = 'github_token';
@@ -486,58 +483,11 @@
                 }
             }
 
-            // ---------- 核心修改：loadData 优先从远程公开加载 ----------
-            function loadPostsFromLocal() {
-                const stored = localStorage.getItem('tongding_blog_posts');
-                if (stored) {
-                    try {
-                        const parsed = JSON.parse(stored);
-                        if (Array.isArray(parsed) && parsed.length) {
-                            return parsed;
-                        }
-                    } catch (_) {}
-                }
-                return null;
-            }
-
-            function savePostsToLocal(data) {
-                localStorage.setItem('tongding_blog_posts', JSON.stringify(data));
-            }
-
+            // ---------- 核心加载：纯 API，无缓存 ----------
             async function loadData() {
                 const token = getStoredToken();
-
-                // 1. 优先从远程公开 URL 加载（无需 Token）
-                try {
-                    const res = await fetch(DATA_URL + '?t=' + Date.now(), {
-                        headers: { 'Cache-Control': 'no-cache' }
-                    });
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (Array.isArray(data) && data.length) {
-                            posts = data;
-                            // 如果有有效 Token，同步到本地缓存
-                            if (isValidToken(token)) {
-                                savePostsToLocal(posts);
-                            }
-                            renderView();
-                            return;
-                        }
-                    }
-                } catch (e) {
-                    console.warn('远程公开加载失败:', e);
-                }
-
-                // 2. 远程无数据或加载失败，尝试本地缓存
-                const local = loadPostsFromLocal();
-                if (local && local.length) {
-                    posts = local;
-                    renderView();
-                    return;
-                }
-
-                // 3. 如果 Token 无效，显示提示（而不是“没有文章”）
                 if (!isValidToken(token)) {
+                    // 未输入或无效 Token，显示提示
                     postListEl.innerHTML = `
                         <div style="text-align:center; padding:40px 20px; background:#2a1a1a; border:2px solid #ff9800; border-radius:12px; color:#ff9800;">
                             <i class="fas fa-key" style="font-size:2.5rem; display:block; margin-bottom:12px;"></i>
@@ -548,24 +498,30 @@
                     return;
                 }
 
-                // 4. 有 Token 但远程无数据，尝试用 Token 加载
-                if (isValidToken(token)) {
-                    try {
-                        const data = await fetchPostsFromAPI(token);
-                        if (Array.isArray(data) && data.length) {
-                            posts = data;
-                            savePostsToLocal(posts);
-                            renderView();
-                            return;
-                        }
-                    } catch (e) {
-                        console.warn('Token 加载失败:', e);
-                    }
-                }
+                postListEl.innerHTML = `<div class="loading-tip"><i class="fas fa-spinner fa-spin"></i> 加载文章中...</div>`;
 
-                // 5. 什么都没有
-                posts = [];
-                renderView();
+                try {
+                    const data = await fetchPostsFromAPI(token);
+                    if (Array.isArray(data)) {
+                        posts = data;
+                        renderView();
+                        return;
+                    } else {
+                        throw new Error('数据格式无效');
+                    }
+                } catch (err) {
+                    console.error('加载失败:', err);
+                    // 直接显示错误，不读取任何缓存
+                    postListEl.innerHTML = `
+                        <div style="text-align:center; padding:40px 20px; color:var(--muted);">
+                            <i class="fas fa-exclamation-triangle" style="font-size:2rem; display:block; margin-bottom:12px; color:#ff9800;"></i>
+                            <strong>加载数据失败</strong>
+                            <p style="font-size:0.9rem; margin-top:8px;">${escapeHtml(err.message)}</p>
+                            <p style="font-size:0.85rem; margin-top:4px; color:#666;">请检查网络连接或 Token 是否有效，然后点击“刷新”重试</p>
+                        </div>
+                    `;
+                    posts = [];
+                }
             }
 
             // ---------- 渲染视图 ----------
@@ -579,7 +535,7 @@
                 }
             }
 
-            // ---------- 显示列表（卡片网格） ----------
+            // ---------- 显示列表 ----------
             function showList() {
                 postListContainer.style.display = 'block';
                 singlePostContainer.classList.remove('active');
@@ -592,7 +548,7 @@
                 }
             }
 
-            // ---------- 显示单篇文章 ----------
+            // ---------- 显示单篇 ----------
             function showSinglePost(id) {
                 const post = posts.find(p => p.id === id);
                 if (!post) {
@@ -611,7 +567,7 @@
                 currentPostId = id;
             }
 
-            // ---------- 渲染文章卡片网格 ----------
+            // ---------- 渲染卡片网格 ----------
             function renderPosts(postsData) {
                 if (!postsData || postsData.length === 0) {
                     postListEl.innerHTML = `
@@ -663,7 +619,7 @@
                 postListEl.innerHTML = html;
             }
 
-            // ---------- 渲染单篇文章 ----------
+            // ---------- 渲染单篇 ----------
             function renderSinglePost(post) {
                 const author = post.author ? escapeHtml(post.author) : '匿名';
                 const comments = post.comments || [];
@@ -720,7 +676,6 @@
 
             // ---------- 事件委托 ----------
             document.addEventListener('click', function(e) {
-                // 删除文章（仅管理员）
                 const delBtn = e.target.closest('.delete-post-btn');
                 if (delBtn) {
                     if (userRole !== 'admin') {
@@ -746,7 +701,6 @@
                     return;
                 }
 
-                // 删除评论（仅管理员）
                 const delCommentBtn = e.target.closest('.del-comment');
                 if (delCommentBtn) {
                     if (userRole !== 'admin') {
@@ -768,7 +722,6 @@
                     return;
                 }
 
-                // 提交评论（任何人）
                 const submitBtn = e.target.closest('.comment-submit');
                 if (submitBtn) {
                     const form = submitBtn.closest('.comment-form');
@@ -780,22 +733,16 @@
                     const author = authorInput.value.trim() || '匿名';
                     const text = textInput.value.trim();
                     if (!text) { alert('评论内容不能为空'); return; }
-
                     const oldPosts = JSON.parse(JSON.stringify(posts));
                     const post = posts.find(p => p.id === postId);
                     if (!post) { alert('文章不存在'); return; }
                     if (!post.comments) post.comments = [];
-                    post.comments.push({
-                        author: author,
-                        text: text,
-                        time: new Date().toISOString()
-                    });
+                    post.comments.push({ author, text, time: new Date().toISOString() });
                     savePostsToGitHub(posts, oldPosts).then(() => renderView());
                     return;
                 }
             });
 
-            // 评论输入框回车提交
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') {
                     const input = e.target.closest('.comment-text-input');
@@ -837,7 +784,6 @@
                 loadData();
             });
 
-            // ---------- 浏览器回退支持 ----------
             window.addEventListener('popstate', function() {
                 renderView();
             });
