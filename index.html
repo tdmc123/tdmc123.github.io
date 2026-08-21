@@ -39,7 +39,6 @@
         .token-status { color:var(--muted); font-size:.9rem; }
         .token-status .valid { color:#4caf50; }
         .token-status .invalid { color:#f44336; }
-        /* 密码设置单独一行 */
         .password-settings { margin-bottom:30px; }
         .blog-motto { background:var(--card); border-radius:var(--radius); padding:28px 32px; margin-bottom:40px; border:1px solid var(--border); box-shadow:var(--shadow); text-align:center; }
         .blog-motto .motto-icon { font-size:2.4rem; color:var(--accent); margin-bottom:8px; }
@@ -104,7 +103,6 @@
         .single-post.active { display:block; }
         .post-list-container { display:block; }
         .post-list-container.hidden { display:none; }
-        .admin-only { display: none; } /* 默认隐藏，管理员通过JS显示 */
         @media (max-width:700px) { .profile-card { flex-direction:column; text-align:center; padding:28px 20px; } .social-links { justify-content:center; } .site-header { flex-direction:column; align-items:flex-start; } .nav-links { width:100%; justify-content:flex-start; gap:18px; } .publish-section { padding:20px; } .post-item { padding:0; } .post-content { padding:16px; } .post-list { grid-template-columns:1fr; } .site-footer { flex-direction:column; text-align:center; } .blog-motto .motto-text { font-size:1.0rem; } .token-settings { flex-direction:column; align-items:stretch; } .token-settings input { min-width:auto; } }
         @media (max-width:480px) { .container { padding:12px 0 30px; } .profile-card { padding:20px 16px; } .avatar { width:80px; height:80px; font-size:2.4rem; } .post-header { flex-direction:column; align-items:flex-start; } .blog-motto { padding:20px 16px; } .token-settings { padding:16px; } .post-thumbnail { height:140px; } }
     </style>
@@ -122,7 +120,7 @@
                 <a id="saveBtn" style="cursor:pointer;">保存</a>
                 <a href="/about">关于</a>
                 <button class="refresh-btn" id="refreshBtn"><i class="fas fa-sync"></i> 刷新</button>
-                <span id="roleBadge" style="font-size:0.8rem; padding:2px 10px; border-radius:12px; background:#555; color:#fff;">👤 访客</span>
+                <span id="roleBadge" style="font-size:0.8rem; padding:2px 10px; border-radius:12px; background:#888; color:#fff;">🔒 未验证</span>
             </nav>
         </header>
 
@@ -149,12 +147,12 @@
             <span class="token-status" id="tokenStatus">⚪ 未设置</span>
         </section>
 
-        <!-- ===== 密码设置（新增） ===== -->
+        <!-- ===== 密码设置（标签改为“访问密码”） ===== -->
         <section class="token-settings password-settings" id="passwordSettings">
-            <label for="passwordInput"><i class="fas fa-lock"></i> 管理密码</label>
+            <label for="passwordInput"><i class="fas fa-lock"></i> 访问密码</label>
             <input type="password" id="passwordInput" placeholder="请输入密码" />
             <button class="btn-sm" id="savePasswordBtn">验证密码</button>
-            <span class="token-status" id="passwordStatus">⚪ 未验证</span>
+            <span class="token-status" id="passwordStatus">⚪ 未输入密码</span>
         </section>
 
         <!-- ===== 博客寄语 ===== -->
@@ -244,7 +242,7 @@
             let posts = [];
             let isSaving = false;
             let currentPostId = null;
-            let userRole = 'guest'; // 'guest' 或 'admin'
+            let userRole = null; // null: 未验证, 'guest': 访客, 'admin': 管理员
 
             // ---------- Token 存储 ----------
             const TOKEN_STORAGE_KEY = 'github_token';
@@ -306,17 +304,19 @@
                     roleBadge.style.background = '#4caf50';
                     passwordStatus.innerHTML = '✅ 管理员';
                     passwordStatus.className = 'token-status valid';
-                    // 显示所有删除按钮
-                    document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
-                } else {
+                } else if (role === 'guest') {
                     roleBadge.textContent = '👤 访客';
                     roleBadge.style.background = '#555';
                     passwordStatus.innerHTML = '✅ 访客';
                     passwordStatus.className = 'token-status valid';
-                    // 隐藏所有删除按钮
-                    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+                } else {
+                    // 未验证
+                    roleBadge.textContent = '🔒 未验证';
+                    roleBadge.style.background = '#888';
+                    passwordStatus.innerHTML = '⚪ 未输入密码';
+                    passwordStatus.className = 'token-status';
                 }
-                // 重新渲染视图（因为删除按钮需要在渲染时生成）
+                // 重新渲染视图（因为删除按钮显示与否依赖角色）
                 renderView();
             }
 
@@ -333,8 +333,8 @@
                         localStorage.removeItem(PASSWORD_STORAGE_KEY);
                     }
                 }
-                // 默认访客
-                updateRoleUI('guest');
+                // 默认未验证
+                updateRoleUI(null);
                 passwordInput.value = '';
             }
 
@@ -343,12 +343,10 @@
                 if (!pwd) { alert('请输入密码'); return; }
                 const role = verifyPassword(pwd);
                 if (!role) {
-                    alert('密码错误，请重试');
                     passwordStatus.innerHTML = '❌ 密码错误';
                     passwordStatus.className = 'token-status invalid';
                     return;
                 }
-                // 保存密码
                 savePasswordToStorage(pwd);
                 updateRoleUI(role);
                 alert('✅ 身份验证成功！当前角色：' + (role === 'admin' ? '管理员' : '访客'));
@@ -582,12 +580,11 @@
                     const author = post.author ? escapeHtml(post.author) : '匿名';
                     const comments = post.comments || [];
                     const excerpt = post.content.substring(0, 120) + (post.content.length > 120 ? '...' : '');
-                    // 随机图片 URL
                     const imgId = post.id % 1000;
                     const imgUrl = `https://picsum.photos/seed/${imgId}/400/200`;
-                    // 根据权限决定是否显示删除按钮
+                    // 只有管理员可见删除按钮
                     const deleteBtnHtml = (userRole === 'admin') ?
-                        `<button class="delete-post-btn admin-only" data-id="${post.id}"><i class="fas fa-trash-alt"></i> 删除</button>` :
+                        `<button class="delete-post-btn" data-id="${post.id}"><i class="fas fa-trash-alt"></i> 删除</button>` :
                         '';
 
                     html += `
@@ -623,9 +620,8 @@
                 let commentsHtml = comments.length === 0 ?
                     `<div class="empty-comment">还没有评论，来说点什么吧</div>` :
                     comments.map((c, idx) => {
-                        // 评论删除按钮：仅管理员可见
                         const delBtn = (userRole === 'admin') ?
-                            `<button class="del-comment admin-only" title="删除评论"><i class="fas fa-times"></i></button>` :
+                            `<button class="del-comment" title="删除评论"><i class="fas fa-times"></i></button>` :
                             '';
                         return `
                             <div class="comment-item" data-postid="${post.id}" data-commentidx="${idx}">
@@ -645,9 +641,8 @@
                     </div>
                 `;
 
-                // 文章删除按钮
                 const deletePostBtn = (userRole === 'admin') ?
-                    `<button class="delete-post-btn admin-only" data-id="${post.id}"><i class="fas fa-trash-alt"></i> 删除文章</button>` :
+                    `<button class="delete-post-btn" data-id="${post.id}"><i class="fas fa-trash-alt"></i> 删除文章</button>` :
                     '';
 
                 singlePostContent.innerHTML = `
