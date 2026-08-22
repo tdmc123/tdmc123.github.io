@@ -6,7 +6,6 @@
     <title>铜锭的博客</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        /* ===== 全局重置 & 暗色变量 ===== */
         * { margin:0; padding:0; box-sizing:border-box; }
         :root { --bg:#121212; --card:#1e1e1e; --border:#333; --text:#e4e4e4; --muted:#aaa; --accent:#4a9eff; --accent-hover:#6aafff; --radius:20px; --shadow:0 8px 28px rgba(0,0,0,0.6); }
         body { font-family:'Segoe UI',sans-serif; background:var(--bg); color:var(--text); line-height:1.6; padding:0 20px; }
@@ -15,7 +14,7 @@
         .logo { font-size:1.9rem; font-weight:700; background:linear-gradient(135deg,#4a9eff,#7a6eff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
         .logo i { -webkit-text-fill-color:initial; color:var(--accent); margin-right:4px; }
         .nav-links { display:flex; gap:28px; font-weight:500; font-size:1rem; flex-wrap:wrap; align-items:center; }
-        .nav-links a { color:var(--text); transition:color .2s; position:relative; cursor:pointer; }
+        .nav-links a { color:var(--text); transition:color .2s; position:relative; cursor:pointer; text-decoration:none; }
         .nav-links a::after { content:''; position:absolute; left:0; bottom:-4px; width:0; height:2px; background:var(--accent); transition:width .25s; }
         .nav-links a:hover { color:var(--accent); }
         .nav-links a:hover::after { width:100%; }
@@ -27,7 +26,7 @@
         .profile-info h1 { font-size:2rem; font-weight:700; margin-bottom:4px; }
         .profile-info .bio { font-size:1.05rem; color:var(--muted); margin-bottom:14px; }
         .social-links { display:flex; flex-wrap:wrap; gap:16px; font-size:1.3rem; }
-        .social-links a { color:var(--muted); transition:color .2s,transform .15s; display:inline-flex; align-items:center; gap:6px; font-size:.95rem; }
+        .social-links a { color:var(--muted); transition:color .2s,transform .15s; display:inline-flex; align-items:center; gap:6px; font-size:.95rem; text-decoration:none; }
         .social-links a i { font-size:1.3rem; }
         .social-links a:hover { color:var(--accent); transform:translateY(-2px); }
         .token-settings { background:var(--card); border-radius:var(--radius); padding:20px 24px; margin-bottom:16px; border:1px solid var(--border); box-shadow:var(--shadow); display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
@@ -91,7 +90,7 @@
         .comment-item .del-comment:hover { background:#3a2a2a; color:#ff5a5a; }
         .empty-comment { color:var(--muted); font-size:.9rem; padding:6px 0; }
         .site-footer { margin-top:56px; padding-top:28px; border-top:1px solid var(--border); text-align:center; color:var(--muted); font-size:.9rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
-        .site-footer a { color:var(--accent); }
+        .site-footer a { color:var(--accent); text-decoration:none; }
         .site-footer a:hover { text-decoration:underline; }
         .loading-tip { text-align:center; padding:40px 0; color:var(--muted); font-size:1.1rem; }
         .refresh-btn { background:var(--accent); color:#fff; border:none; padding:6px 16px; border-radius:30px; cursor:pointer; font-size:.8rem; transition:background .2s; }
@@ -103,7 +102,6 @@
         .single-post.active { display:block; }
         .post-list-container { display:block; }
         .post-list-container.hidden { display:none; }
-        .version-tag { font-size:0.7rem; color:var(--muted); margin-left:12px; }
         @media (max-width:700px) { .profile-card { flex-direction:column; text-align:center; padding:28px 20px; } .social-links { justify-content:center; } .site-header { flex-direction:column; align-items:flex-start; } .nav-links { width:100%; justify-content:flex-start; gap:18px; } .publish-section { padding:20px; } .post-item { padding:0; } .post-content { padding:16px; } .post-list { grid-template-columns:1fr; } .site-footer { flex-direction:column; text-align:center; } .blog-motto .motto-text { font-size:1.0rem; } .token-settings { flex-direction:column; align-items:stretch; } .token-settings input { min-width:auto; } }
         @media (max-width:480px) { .container { padding:12px 0 30px; } .profile-card { padding:20px 16px; } .avatar { width:80px; height:80px; font-size:2.4rem; } .post-header { flex-direction:column; align-items:flex-start; } .blog-motto { padding:20px 16px; } .token-settings { padding:16px; } .post-thumbnail { height:140px; } }
     </style>
@@ -112,21 +110,18 @@
 
     <div class="container">
 
-        <!-- ===== 头部 ===== -->
         <header class="site-header">
             <span class="logo"><i class="fas fa-cube"></i> 铜锭的博客</span>
             <nav class="nav-links">
-                <a href="#" id="homeLink">首页</a>
+                <a href="/" id="homeLink">首页</a>
                 <a href="#publish" id="writeLink">写文章</a>
                 <a id="saveBtn" style="cursor:pointer;">保存</a>
                 <a href="/about">关于</a>
                 <button class="refresh-btn" id="refreshBtn"><i class="fas fa-sync"></i> 刷新</button>
                 <span id="roleBadge" style="font-size:0.8rem; padding:2px 10px; border-radius:12px; background:#888; color:#fff;">🔒 未验证</span>
-                <span class="version-tag">v2.0-API</span>
             </nav>
         </header>
 
-        <!-- ===== 个人信息 ===== -->
         <section class="profile-card">
             <div class="avatar"><i class="fas fa-user-astronaut"></i></div>
             <div class="profile-info">
@@ -141,7 +136,6 @@
             </div>
         </section>
 
-        <!-- ===== Token 设置 ===== -->
         <section class="token-settings" id="tokenSettings">
             <label for="tokenInput"><i class="fas fa-key"></i> GitHub Token</label>
             <input type="text" id="tokenInput" placeholder="粘贴您的 GitHub Personal Access Token (ghp_...)" />
@@ -149,7 +143,6 @@
             <span class="token-status" id="tokenStatus">⚪ 未设置</span>
         </section>
 
-        <!-- ===== 密码设置 ===== -->
         <section class="token-settings password-settings" id="passwordSettings">
             <label for="passwordInput"><i class="fas fa-lock"></i> 访问密码</label>
             <input type="password" id="passwordInput" placeholder="请输入密码" />
@@ -157,7 +150,6 @@
             <span class="token-status" id="passwordStatus">⚪ 未输入密码</span>
         </section>
 
-        <!-- ===== 博客寄语 ===== -->
         <section class="blog-motto">
             <div class="motto-icon"><i class="fas fa-quote-left"></i></div>
             <div class="motto-text">
@@ -167,7 +159,6 @@
             <div class="motto-author">—— 铜锭 · 2026</div>
         </section>
 
-        <!-- ===== 发布文章 ===== -->
         <section class="publish-section" id="publish">
             <h2><i class="fas fa-feather-alt"></i> 发布新文章</h2>
             <form class="publish-form" id="publishForm">
@@ -189,7 +180,6 @@
             </form>
         </section>
 
-        <!-- ===== 文章列表（卡片网格） ===== -->
         <div id="postListContainer" class="post-list-container">
             <div class="section-title"><i class="fas fa-pen-fancy"></i> 全部文章</div>
             <div class="post-list" id="postList">
@@ -197,15 +187,13 @@
             </div>
         </div>
 
-        <!-- ===== 单篇文章视图 ===== -->
         <div id="singlePostContainer" class="single-post">
-            <a href="#" id="backToList" class="back-link"><i class="fas fa-arrow-left"></i> 返回文章列表</a>
+            <a href="/" id="backToList" class="back-link"><i class="fas fa-arrow-left"></i> 返回文章列表</a>
             <article class="post-item" id="singlePostContent">
                 <!-- 由 JavaScript 填充 -->
             </article>
         </div>
 
-        <!-- ===== 页脚 ===== -->
         <footer class="site-footer">
             <span>&copy; 2026 铜锭 · <a href="https://beian.miit.gov.cn/" target="_blank">无备案</a></span>
         </footer>
@@ -213,588 +201,590 @@
     </div>
 
     <script>
-        (function() {
-            'use strict';
-            console.log('✅ 铜锭博客 v2.0-API 已加载，所有数据通过 GitHub API 获取');
+        // 将所有关键变量和函数放到全局作用域，方便调试
+        const REPO_OWNER = 'tdmc123';
+        const REPO_NAME = 'tdmc123.github.io';
+        const FILE_PATH = 'posts.json';
+        const TOKEN_STORAGE_KEY = 'github_token';
+        const PASSWORD_STORAGE_KEY = 'blog_password';
 
-            // ---------- 配置 ----------
-            const REPO_OWNER = 'tdmc123';
-            const REPO_NAME = 'tdmc123.github.io';
-            const FILE_PATH = 'posts.json';
+        let posts = [];
+        let userRole = null;
+        let currentPostId = null;
+        let isSaving = false;
 
-            // ---------- DOM 元素 ----------
-            const postListEl = document.getElementById('postList');
-            const publishForm = document.getElementById('publishForm');
-            const saveBtn = document.getElementById('saveBtn');
-            const refreshBtn = document.getElementById('refreshBtn');
-            const tokenInput = document.getElementById('tokenInput');
-            const saveTokenBtn = document.getElementById('saveTokenBtn');
-            const tokenStatus = document.getElementById('tokenStatus');
-            const postListContainer = document.getElementById('postListContainer');
-            const singlePostContainer = document.getElementById('singlePostContainer');
-            const singlePostContent = document.getElementById('singlePostContent');
-            const backToList = document.getElementById('backToList');
-            const homeLink = document.getElementById('homeLink');
-            const passwordInput = document.getElementById('passwordInput');
-            const savePasswordBtn = document.getElementById('savePasswordBtn');
-            const passwordStatus = document.getElementById('passwordStatus');
-            const roleBadge = document.getElementById('roleBadge');
+        // DOM 元素
+        const postListEl = document.getElementById('postList');
+        const postListContainer = document.getElementById('postListContainer');
+        const singlePostContainer = document.getElementById('singlePostContainer');
+        const singlePostContent = document.getElementById('singlePostContent');
+        const backToList = document.getElementById('backToList');
+        const publishForm = document.getElementById('publishForm');
+        const saveBtn = document.getElementById('saveBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const tokenInput = document.getElementById('tokenInput');
+        const saveTokenBtn = document.getElementById('saveTokenBtn');
+        const tokenStatus = document.getElementById('tokenStatus');
+        const passwordInput = document.getElementById('passwordInput');
+        const savePasswordBtn = document.getElementById('savePasswordBtn');
+        const passwordStatus = document.getElementById('passwordStatus');
+        const roleBadge = document.getElementById('roleBadge');
+        const homeLink = document.getElementById('homeLink');
+        const writeLink = document.getElementById('writeLink');
 
-            // ---------- 全局数据 ----------
-            let posts = [];
-            let isSaving = false;
-            let currentPostId = null;
-            let userRole = null;
+        function getStoredToken() {
+            return localStorage.getItem(TOKEN_STORAGE_KEY) || '';
+        }
 
-            // ---------- Token 存储 ----------
-            const TOKEN_STORAGE_KEY = 'github_token';
-            const PASSWORD_STORAGE_KEY = 'blog_password';
+        function saveTokenToStorage(token) {
+            localStorage.setItem(TOKEN_STORAGE_KEY, token);
+        }
 
-            function getStoredToken() {
-                return localStorage.getItem(TOKEN_STORAGE_KEY) || '';
+        function isValidToken(token) {
+            return token && token.startsWith('ghp_') && token.length > 10;
+        }
+
+        function updateTokenStatus() {
+            const token = getStoredToken();
+            if (isValidToken(token)) {
+                tokenStatus.innerHTML = `✅ 已设置 Token (${token.slice(0, 8)}...)`;
+                tokenStatus.className = 'token-status valid';
+            } else if (token) {
+                tokenStatus.innerHTML = '⚠️ Token 格式无效 (应以 ghp_ 开头)';
+                tokenStatus.className = 'token-status invalid';
+            } else {
+                tokenStatus.innerHTML = '⚪ 未设置 Token';
+                tokenStatus.className = 'token-status';
             }
+            tokenInput.value = token;
+        }
 
-            function saveTokenToStorage(token) {
-                localStorage.setItem(TOKEN_STORAGE_KEY, token);
+        function getStoredPassword() {
+            return localStorage.getItem(PASSWORD_STORAGE_KEY) || '';
+        }
+
+        function savePasswordToStorage(pwd) {
+            localStorage.setItem(PASSWORD_STORAGE_KEY, pwd);
+        }
+
+        function verifyPassword(pwd) {
+            if (pwd === '258088') return 'admin';
+            if (pwd === '123456') return 'guest';
+            return null;
+        }
+
+        function updateRoleUI(role) {
+            userRole = role;
+            if (role === 'admin') {
+                roleBadge.textContent = '👑 管理员';
+                roleBadge.style.background = '#4caf50';
+                passwordStatus.innerHTML = '✅ 管理员';
+                passwordStatus.className = 'token-status valid';
+            } else if (role === 'guest') {
+                roleBadge.textContent = '👤 访客';
+                roleBadge.style.background = '#555';
+                passwordStatus.innerHTML = '✅ 访客';
+                passwordStatus.className = 'token-status valid';
+            } else {
+                roleBadge.textContent = '🔒 未验证';
+                roleBadge.style.background = '#888';
+                passwordStatus.innerHTML = '⚪ 未输入密码';
+                passwordStatus.className = 'token-status';
             }
+            renderView();
+        }
 
-            function isValidToken(token) {
-                return token && token.startsWith('ghp_') && token.length > 10;
-            }
-
-            function updateTokenStatus() {
-                const token = getStoredToken();
-                if (isValidToken(token)) {
-                    tokenStatus.innerHTML = `✅ 已设置 Token (${token.slice(0, 8)}...)`;
-                    tokenStatus.className = 'token-status valid';
-                } else if (token) {
-                    tokenStatus.innerHTML = '⚠️ Token 格式无效 (应以 ghp_ 开头)';
-                    tokenStatus.className = 'token-status invalid';
-                } else {
-                    tokenStatus.innerHTML = '⚪ 未设置 Token';
-                    tokenStatus.className = 'token-status';
-                }
-                tokenInput.value = token;
-            }
-
-            saveTokenBtn.addEventListener('click', function() {
-                const token = tokenInput.value.trim();
-                if (!token) { alert('请输入 Token'); return; }
-                if (!isValidToken(token)) { alert('Token 格式不正确，请确保以 ghp_ 开头且长度正确'); return; }
-                saveTokenToStorage(token);
-                updateTokenStatus();
-                alert('✅ Token 已保存！');
-                loadData();
-            });
-            updateTokenStatus();
-
-            // ---------- 密码管理 ----------
-            function getStoredPassword() {
-                return localStorage.getItem(PASSWORD_STORAGE_KEY) || '';
-            }
-
-            function savePasswordToStorage(pwd) {
-                localStorage.setItem(PASSWORD_STORAGE_KEY, pwd);
-            }
-
-            function verifyPassword(pwd) {
-                if (pwd === '258088') return 'admin';
-                if (pwd === '123456') return 'guest';
-                return null;
-            }
-
-            function updateRoleUI(role) {
-                userRole = role;
-                if (role === 'admin') {
-                    roleBadge.textContent = '👑 管理员';
-                    roleBadge.style.background = '#4caf50';
-                    passwordStatus.innerHTML = '✅ 管理员';
-                    passwordStatus.className = 'token-status valid';
-                } else if (role === 'guest') {
-                    roleBadge.textContent = '👤 访客';
-                    roleBadge.style.background = '#555';
-                    passwordStatus.innerHTML = '✅ 访客';
-                    passwordStatus.className = 'token-status valid';
-                } else {
-                    roleBadge.textContent = '🔒 未验证';
-                    roleBadge.style.background = '#888';
-                    passwordStatus.innerHTML = '⚪ 未输入密码';
-                    passwordStatus.className = 'token-status';
-                }
-                renderView();
-            }
-
-            function initPassword() {
-                const storedPwd = getStoredPassword();
-                if (storedPwd) {
-                    const role = verifyPassword(storedPwd);
-                    if (role) {
-                        updateRoleUI(role);
-                        passwordInput.value = storedPwd;
-                        return;
-                    } else {
-                        localStorage.removeItem(PASSWORD_STORAGE_KEY);
-                    }
-                }
-                updateRoleUI(null);
-                passwordInput.value = '';
-            }
-
-            savePasswordBtn.addEventListener('click', function() {
-                const pwd = passwordInput.value.trim();
-                if (!pwd) { alert('请输入密码'); return; }
-                const role = verifyPassword(pwd);
-                if (!role) {
-                    passwordStatus.innerHTML = '❌ 密码错误';
-                    passwordStatus.className = 'token-status invalid';
+        function initPassword() {
+            const storedPwd = getStoredPassword();
+            if (storedPwd) {
+                const role = verifyPassword(storedPwd);
+                if (role) {
+                    updateRoleUI(role);
+                    passwordInput.value = storedPwd;
                     return;
+                } else {
+                    localStorage.removeItem(PASSWORD_STORAGE_KEY);
                 }
-                savePasswordToStorage(pwd);
-                updateRoleUI(role);
-                alert('✅ 身份验证成功！当前角色：' + (role === 'admin' ? '管理员' : '访客'));
+            }
+            updateRoleUI(null);
+            passwordInput.value = '';
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function formatTime(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            return d.toLocaleString('zh-CN', { hour12: false });
+        }
+
+        function genId() {
+            return Date.now() + Math.floor(Math.random() * 1000000);
+        }
+
+        function base64Encode(str) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(str);
+            let binary = '';
+            data.forEach(byte => binary += String.fromCharCode(byte));
+            return btoa(binary);
+        }
+
+        function base64Decode(base64) {
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            const decoder = new TextDecoder('utf-8');
+            return decoder.decode(bytes);
+        }
+
+        async function fetchPostsFromAPI(token) {
+            const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+            const res = await fetch(url, {
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
             });
-
-            // ---------- 工具函数 ----------
-            function escapeHtml(str) {
-                if (!str) return '';
-                const div = document.createElement('div');
-                div.textContent = str;
-                return div.innerHTML;
+            if (res.status === 404) return [];
+            if (!res.ok) {
+                const err = await res.text();
+                throw new Error(`获取数据失败 (${res.status}): ${err}`);
             }
+            const data = await res.json();
+            const content = base64Decode(data.content);
+            const parsed = JSON.parse(content);
+            if (!Array.isArray(parsed)) throw new Error('数据格式无效');
+            return parsed;
+        }
 
-            function formatTime(iso) {
-                if (!iso) return '';
-                const d = new Date(iso);
-                return d.toLocaleString('zh-CN', { hour12: false });
+        async function savePostsToGitHub(dataToSave, rollbackData) {
+            if (isSaving) {
+                alert('⏳ 正在保存中，请稍后再试');
+                return false;
             }
-
-            function genId() {
-                return Date.now() + Math.floor(Math.random() * 1000000);
+            const token = getStoredToken();
+            if (!isValidToken(token)) {
+                alert('请先设置有效的 GitHub Token（在页面上方输入框）');
+                return false;
             }
+            try { JSON.stringify(dataToSave); } catch (e) { alert('数据格式错误，无法保存'); return false; }
 
-            // ---------- 编码解码 ----------
-            function base64Encode(str) {
-                const encoder = new TextEncoder();
-                const data = encoder.encode(str);
-                let binary = '';
-                data.forEach(byte => binary += String.fromCharCode(byte));
-                return btoa(binary);
-            }
+            isSaving = true;
+            const content = JSON.stringify(dataToSave, null, 2);
+            const encodedContent = base64Encode(content);
 
-            function base64Decode(base64) {
-                const binary = atob(base64);
-                const bytes = new Uint8Array(binary.length);
-                for (let i = 0; i < binary.length; i++) {
-                    bytes[i] = binary.charCodeAt(i);
-                }
-                const decoder = new TextDecoder('utf-8');
-                return decoder.decode(bytes);
-            }
-
-            // ---------- 唯一数据获取方式：通过 GitHub API ----------
-            async function fetchPostsFromAPI(token) {
-                const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
-                const res = await fetch(url, {
+            try {
+                console.log('🔄 正在保存数据到 GitHub...');
+                const getUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+                const getRes = await fetch(getUrl, {
                     headers: {
                         'Authorization': `token ${token}`,
                         'Accept': 'application/vnd.github.v3+json'
                     }
                 });
-                if (res.status === 404) return [];
-                if (!res.ok) {
-                    const err = await res.text();
-                    throw new Error(`获取数据失败 (${res.status}): ${err}`);
+                let sha = null;
+                if (getRes.ok) {
+                    const fileData = await getRes.json();
+                    sha = fileData.sha;
+                } else if (getRes.status !== 404) {
+                    const errorText = await getRes.text();
+                    throw new Error(`获取文件信息失败 (HTTP ${getRes.status}): ${errorText}`);
                 }
-                const data = await res.json();
-                const content = base64Decode(data.content);
-                const parsed = JSON.parse(content);
-                if (!Array.isArray(parsed)) throw new Error('数据格式无效');
-                return parsed;
-            }
-
-            async function savePostsToGitHub(dataToSave, rollbackData) {
-                if (isSaving) {
-                    alert('⏳ 正在保存中，请稍后再试');
-                    return false;
-                }
-                const token = getStoredToken();
-                if (!isValidToken(token)) {
-                    alert('请先设置有效的 GitHub Token（在页面上方输入框）');
-                    return false;
-                }
-                try { JSON.stringify(dataToSave); } catch (e) { alert('数据格式错误，无法保存'); return false; }
-
-                isSaving = true;
-                const content = JSON.stringify(dataToSave, null, 2);
-                const encodedContent = base64Encode(content);
-
-                try {
-                    console.log('🔄 正在保存数据到 GitHub...');
-                    const getUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
-                    const getRes = await fetch(getUrl, {
-                        headers: {
-                            'Authorization': `token ${token}`,
-                            'Accept': 'application/vnd.github.v3+json'
-                        }
-                    });
-                    let sha = null;
-                    if (getRes.ok) {
-                        const fileData = await getRes.json();
-                        sha = fileData.sha;
-                    } else if (getRes.status !== 404) {
-                        const errorText = await getRes.text();
-                        throw new Error(`获取文件信息失败 (HTTP ${getRes.status}): ${errorText}`);
-                    }
-                    const putUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
-                    const putBody = {
-                        message: '更新 posts.json (通过博客保存)',
-                        content: encodedContent,
-                        branch: 'main'
-                    };
-                    if (sha) putBody.sha = sha;
-                    const putRes = await fetch(putUrl, {
-                        method: 'PUT',
-                        headers: {
-                            'Authorization': `token ${token}`,
-                            'Accept': 'application/vnd.github.v3+json',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(putBody)
-                    });
-                    if (!putRes.ok) {
-                        const errorData = await putRes.json();
-                        throw new Error(errorData.message || '更新文件失败');
-                    }
-                    console.log('✅ 保存成功，正在重新加载...');
-                    const freshData = await fetchPostsFromAPI(token);
-                    posts = freshData;
-                    renderView();
-                    alert('✅ 操作已成功保存到 GitHub！');
-                    return true;
-                } catch (err) {
-                    console.error('❌ 保存失败:', err);
-                    if (rollbackData !== undefined) {
-                        posts = rollbackData;
-                        renderView();
-                        alert('❌ 保存失败，已回滚到操作前状态：' + err.message);
-                    } else {
-                        alert('❌ 保存失败：' + err.message);
-                    }
-                    return false;
-                } finally {
-                    isSaving = false;
-                }
-            }
-
-            // ---------- 核心加载：仅通过 API，无任何本地请求 ----------
-            async function loadData() {
-                const token = getStoredToken();
-                if (!isValidToken(token)) {
-                    postListEl.innerHTML = `
-                        <div style="text-align:center; padding:40px 20px; background:#2a1a1a; border:2px solid #ff9800; border-radius:12px; color:#ff9800;">
-                            <i class="fas fa-key" style="font-size:2.5rem; display:block; margin-bottom:12px;"></i>
-                            <strong>请先在上方输入有效的 GitHub Token</strong>
-                            <p style="font-size:0.9rem; color:#aaa; margin-top:8px;">Token 用于同步文章和评论到你的 GitHub 仓库</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                postListEl.innerHTML = `<div class="loading-tip"><i class="fas fa-spinner fa-spin"></i> 加载文章中...</div>`;
-
-                try {
-                    const data = await fetchPostsFromAPI(token);
-                    if (Array.isArray(data)) {
-                        posts = data;
-                        renderView();
-                        return;
-                    } else {
-                        throw new Error('数据格式无效');
-                    }
-                } catch (err) {
-                    console.error('加载失败:', err);
-                    postListEl.innerHTML = `
-                        <div style="text-align:center; padding:40px 20px; color:var(--muted);">
-                            <i class="fas fa-exclamation-triangle" style="font-size:2rem; display:block; margin-bottom:12px; color:#ff9800;"></i>
-                            <strong>加载数据失败</strong>
-                            <p style="font-size:0.9rem; margin-top:8px;">${escapeHtml(err.message)}</p>
-                            <p style="font-size:0.85rem; margin-top:4px; color:#666;">请检查网络连接或 Token 是否有效，然后点击“刷新”重试</p>
-                        </div>
-                    `;
-                    posts = [];
-                }
-            }
-
-            // ---------- 渲染视图 ----------
-            function renderView() {
-                const params = new URLSearchParams(window.location.search);
-                const postId = params.get('post');
-                if (postId) {
-                    showSinglePost(postId);
-                } else {
-                    showList();
-                }
-            }
-
-            // ---------- 显示列表 ----------
-            function showList() {
-                postListContainer.style.display = 'block';
-                singlePostContainer.classList.remove('active');
-                singlePostContainer.style.display = 'none';
-                document.getElementById('publish').style.display = 'block';
-                renderPosts(posts);
-                if (window.location.search) {
-                    const url = window.location.pathname;
-                    window.history.replaceState({}, '', url);
-                }
-            }
-
-            // ---------- 显示单篇 ----------
-            function showSinglePost(id) {
-                const idStr = String(id);
-                const post = posts.find(p => String(p.id) === idStr);
-                if (!post) {
-                    alert('文章不存在');
-                    showList();
-                    return;
-                }
-                postListContainer.style.display = 'none';
-                singlePostContainer.style.display = 'block';
-                singlePostContainer.classList.add('active');
-                document.getElementById('publish').style.display = 'none';
-                renderSinglePost(post);
-                if (window.location.search !== `?post=${idStr}`) {
-                    window.history.pushState({}, '', `?post=${idStr}`);
-                }
-                currentPostId = post.id;
-            }
-
-            // ---------- 渲染卡片网格 ----------
-            function renderPosts(postsData) {
-                if (!postsData || postsData.length === 0) {
-                    postListEl.innerHTML = `
-                        <div style="text-align:center; padding:40px 0; color:var(--muted); grid-column:1/-1;">
-                            <i class="fas fa-inbox" style="font-size:2rem; display:block; margin-bottom:12px;"></i>
-                            还没有文章，发布第一篇吧！
-                        </div>
-                    `;
-                    return;
-                }
-
-                const sorted = [...postsData].sort((a, b) => new Date(b.date) - new Date(a.date));
-
-                let html = '';
-                sorted.forEach(post => {
-                    if (!post.id) post.id = genId();
-                    const author = post.author ? escapeHtml(post.author) : '匿名';
-                    const comments = post.comments || [];
-                    const excerpt = post.content.substring(0, 120) + (post.content.length > 120 ? '...' : '');
-                    const imgId = post.id % 1000;
-                    const imgUrl = `https://picsum.photos/seed/${imgId}/400/200`;
-                    const deleteBtnHtml = (userRole === 'admin') ?
-                        `<button class="delete-post-btn" data-id="${String(post.id)}"><i class="fas fa-trash-alt"></i> 删除</button>` :
-                        '';
-
-                    html += `
-                        <div class="post-item" data-postid="${post.id}" onclick="window.location='?post=${post.id}'">
-                            <div class="post-thumbnail">
-                                <img src="${imgUrl}" alt="${escapeHtml(post.title)}" loading="lazy" onerror="this.style.display='none'" />
-                            </div>
-                            <div class="post-content">
-                                <h3 class="post-title">${escapeHtml(post.title)}</h3>
-                                <div class="post-meta">
-                                    <span class="date"><i class="far fa-calendar-alt"></i> ${post.date}</span>
-                                    <span class="post-author"><i class="fas fa-user"></i> ${author}</span>
-                                    <span><i class="far fa-comment"></i> ${comments.length} 条评论</span>
-                                </div>
-                                <div class="post-tags">
-                                    <span class="tag">${escapeHtml(post.tag)}</span>
-                                </div>
-                                <div class="post-excerpt">${escapeHtml(excerpt)}</div>
-                                <div class="post-actions">
-                                    ${deleteBtnHtml}
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                const putUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+                const putBody = {
+                    message: '更新 posts.json (通过博客保存)',
+                    content: encodedContent,
+                    branch: 'main'
+                };
+                if (sha) putBody.sha = sha;
+                const putRes = await fetch(putUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(putBody)
                 });
-                postListEl.innerHTML = html;
+                if (!putRes.ok) {
+                    const errorData = await putRes.json();
+                    throw new Error(errorData.message || '更新文件失败');
+                }
+                console.log('✅ 保存成功，正在重新加载...');
+                const freshData = await fetchPostsFromAPI(token);
+                posts = freshData;
+                renderView();
+                alert('✅ 操作已成功保存到 GitHub！');
+                return true;
+            } catch (err) {
+                console.error('❌ 保存失败:', err);
+                if (rollbackData !== undefined) {
+                    posts = rollbackData;
+                    renderView();
+                    alert('❌ 保存失败，已回滚到操作前状态：' + err.message);
+                } else {
+                    alert('❌ 保存失败：' + err.message);
+                }
+                return false;
+            } finally {
+                isSaving = false;
+            }
+        }
+
+        async function loadData() {
+            const token = getStoredToken();
+            if (!isValidToken(token)) {
+                postListEl.innerHTML = `
+                    <div style="text-align:center; padding:40px 20px; background:#2a1a1a; border:2px solid #ff9800; border-radius:12px; color:#ff9800;">
+                        <i class="fas fa-key" style="font-size:2.5rem; display:block; margin-bottom:12px;"></i>
+                        <strong>请先在上方输入有效的 GitHub Token</strong>
+                        <p style="font-size:0.9rem; color:#aaa; margin-top:8px;">Token 用于同步文章和评论到你的 GitHub 仓库</p>
+                    </div>
+                `;
+                posts = [];
+                return;
             }
 
-            // ---------- 渲染单篇 ----------
-            function renderSinglePost(post) {
+            postListEl.innerHTML = `<div class="loading-tip"><i class="fas fa-spinner fa-spin"></i> 加载文章中...</div>`;
+
+            try {
+                const data = await fetchPostsFromAPI(token);
+                if (Array.isArray(data)) {
+                    posts = data;
+                    renderView();
+                    return;
+                } else {
+                    throw new Error('数据格式无效');
+                }
+            } catch (err) {
+                console.error('加载失败:', err);
+                postListEl.innerHTML = `
+                    <div style="text-align:center; padding:40px 20px; color:var(--muted);">
+                        <i class="fas fa-exclamation-triangle" style="font-size:2rem; display:block; margin-bottom:12px; color:#ff9800;"></i>
+                        <strong>加载数据失败</strong>
+                        <p style="font-size:0.9rem; margin-top:8px;">${escapeHtml(err.message)}</p>
+                        <p style="font-size:0.85rem; margin-top:4px; color:#666;">请检查网络连接或 Token 是否有效，然后点击“刷新”重试</p>
+                    </div>
+                `;
+                posts = [];
+            }
+        }
+
+        function renderView() {
+            const params = new URLSearchParams(window.location.search);
+            const postId = params.get('post');
+            if (postId) {
+                showSinglePost(postId);
+            } else {
+                showList();
+            }
+        }
+
+        function showList() {
+            postListContainer.style.display = 'block';
+            singlePostContainer.classList.remove('active');
+            singlePostContainer.style.display = 'none';
+            document.getElementById('publish').style.display = 'block';
+            renderPosts(posts);
+            if (window.location.search) {
+                const url = window.location.pathname;
+                window.history.replaceState({}, '', url);
+            }
+        }
+
+        function showSinglePost(id) {
+            const idStr = String(id);
+            console.log('🔍 查找文章 ID:', idStr);
+            console.log('📦 posts 数据:', posts);
+            
+            const post = posts.find(p => String(p.id) === idStr);
+            if (!post) {
+                console.error('❌ 未找到文章:', idStr);
+                alert('文章不存在');
+                showList();
+                return;
+            }
+            postListContainer.style.display = 'none';
+            singlePostContainer.style.display = 'block';
+            singlePostContainer.classList.add('active');
+            document.getElementById('publish').style.display = 'none';
+            renderSinglePost(post);
+            if (window.location.search !== `?post=${idStr}`) {
+                window.history.pushState({}, '', `?post=${idStr}`);
+            }
+            currentPostId = post.id;
+        }
+
+        function renderPosts(postsData) {
+            if (!postsData || postsData.length === 0) {
+                postListEl.innerHTML = `
+                    <div style="text-align:center; padding:40px 0; color:var(--muted); grid-column:1/-1;">
+                        <i class="fas fa-inbox" style="font-size:2rem; display:block; margin-bottom:12px;"></i>
+                        还没有文章，发布第一篇吧！
+                    </div>
+                `;
+                return;
+            }
+
+            const sorted = [...postsData].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            let html = '';
+            sorted.forEach(post => {
+                if (!post.id) post.id = genId();
                 const author = post.author ? escapeHtml(post.author) : '匿名';
                 const comments = post.comments || [];
-                let commentsHtml = comments.length === 0 ?
-                    `<div class="empty-comment">还没有评论，来说点什么吧</div>` :
-                    comments.map((c, idx) => {
-                        const delBtn = (userRole === 'admin') ?
-                            `<button class="del-comment" title="删除评论"><i class="fas fa-times"></i></button>` :
-                            '';
-                        return `
-                            <div class="comment-item" data-postid="${String(post.id)}" data-commentidx="${idx}">
-                                <span class="comment-author">${escapeHtml(c.author)}</span>
-                                <span class="comment-text">${escapeHtml(c.text)}</span>
-                                <span class="comment-time">${formatTime(c.time)}</span>
-                                ${delBtn}
-                            </div>
-                        `;
-                    }).join('');
-
-                const commentFormHtml = `
-                    <div class="comment-form" data-postid="${String(post.id)}">
-                        <input type="text" placeholder="你的昵称" class="comment-author-input" value="访客" />
-                        <input type="text" placeholder="说点什么…" class="comment-text-input" />
-                        <button class="btn-sm comment-submit">评论</button>
-                    </div>
-                `;
-
-                const deletePostBtn = (userRole === 'admin') ?
-                    `<button class="delete-post-btn" data-id="${String(post.id)}"><i class="fas fa-trash-alt"></i> 删除文章</button>` :
+                const excerpt = post.content.substring(0, 120) + (post.content.length > 120 ? '...' : '');
+                const imgId = post.id % 1000;
+                const imgUrl = `https://picsum.photos/seed/${imgId}/400/200`;
+                const deleteBtnHtml = (userRole === 'admin') ?
+                    `<button class="delete-post-btn" data-id="${String(post.id)}"><i class="fas fa-trash-alt"></i> 删除</button>` :
                     '';
 
-                singlePostContent.innerHTML = `
-                    <div class="post-header" style="padding:0 0 16px 0;">
-                        <h1 class="post-title" style="font-size:1.8rem;">${escapeHtml(post.title)}</h1>
-                        <span class="post-tags"><span class="tag">${escapeHtml(post.tag)}</span></span>
-                    </div>
-                    <div class="post-meta" style="padding:0 0 12px 0;">
-                        <span class="date"><i class="far fa-calendar-alt"></i> ${post.date}</span>
-                        <span class="post-author"><i class="fas fa-user"></i> ${author}</span>
-                        <span><i class="far fa-comment"></i> ${comments.length} 条评论</span>
-                    </div>
-                    <div class="post-body" style="font-size:1.1rem; line-height:1.8; padding:0 0 16px 0;">${escapeHtml(post.content)}</div>
-                    <div class="post-actions" style="border-top:1px solid var(--border); padding-top:16px; margin-top:8px;">
-                        ${deletePostBtn}
-                    </div>
-                    <div class="comment-section" style="margin-top:20px;">
-                        ${commentFormHtml}
-                        <div class="comment-list">
-                            ${commentsHtml}
+                html += `
+                    <div class="post-item" data-postid="${String(post.id)}">
+                        <div class="post-thumbnail">
+                            <img src="${imgUrl}" alt="${escapeHtml(post.title)}" loading="lazy" onerror="this.style.display='none'" />
+                        </div>
+                        <div class="post-content">
+                            <h3 class="post-title">${escapeHtml(post.title)}</h3>
+                            <div class="post-meta">
+                                <span class="date"><i class="far fa-calendar-alt"></i> ${post.date}</span>
+                                <span class="post-author"><i class="fas fa-user"></i> ${author}</span>
+                                <span><i class="far fa-comment"></i> ${comments.length} 条评论</span>
+                            </div>
+                            <div class="post-tags">
+                                <span class="tag">${escapeHtml(post.tag)}</span>
+                            </div>
+                            <div class="post-excerpt">${escapeHtml(excerpt)}</div>
+                            <div class="post-actions">
+                                ${deleteBtnHtml}
+                            </div>
                         </div>
                     </div>
                 `;
+            });
+            postListEl.innerHTML = html;
+        }
+
+        function renderSinglePost(post) {
+            const author = post.author ? escapeHtml(post.author) : '匿名';
+            const comments = post.comments || [];
+            let commentsHtml = comments.length === 0 ?
+                `<div class="empty-comment">还没有评论，来说点什么吧</div>` :
+                comments.map((c, idx) => {
+                    const delBtn = (userRole === 'admin') ?
+                        `<button class="del-comment" title="删除评论"><i class="fas fa-times"></i></button>` :
+                        '';
+                    return `
+                        <div class="comment-item" data-postid="${String(post.id)}" data-commentidx="${idx}">
+                            <span class="comment-author">${escapeHtml(c.author)}</span>
+                            <span class="comment-text">${escapeHtml(c.text)}</span>
+                            <span class="comment-time">${formatTime(c.time)}</span>
+                            ${delBtn}
+                        </div>
+                    `;
+                }).join('');
+
+            const commentFormHtml = `
+                <div class="comment-form" data-postid="${String(post.id)}">
+                    <input type="text" placeholder="你的昵称" class="comment-author-input" value="访客" />
+                    <input type="text" placeholder="说点什么…" class="comment-text-input" />
+                    <button class="btn-sm comment-submit">评论</button>
+                </div>
+            `;
+
+            const deletePostBtn = (userRole === 'admin') ?
+                `<button class="delete-post-btn" data-id="${String(post.id)}"><i class="fas fa-trash-alt"></i> 删除文章</button>` :
+                '';
+
+            singlePostContent.innerHTML = `
+                <div class="post-header" style="padding:0 0 16px 0;">
+                    <h1 class="post-title" style="font-size:1.8rem;">${escapeHtml(post.title)}</h1>
+                    <span class="post-tags"><span class="tag">${escapeHtml(post.tag)}</span></span>
+                </div>
+                <div class="post-meta" style="padding:0 0 12px 0;">
+                    <span class="date"><i class="far fa-calendar-alt"></i> ${post.date}</span>
+                    <span class="post-author"><i class="fas fa-user"></i> ${author}</span>
+                    <span><i class="far fa-comment"></i> ${comments.length} 条评论</span>
+                </div>
+                <div class="post-body" style="font-size:1.1rem; line-height:1.8; padding:0 0 16px 0;">${escapeHtml(post.content)}</div>
+                <div class="post-actions" style="border-top:1px solid var(--border); padding-top:16px; margin-top:8px;">
+                    ${deletePostBtn}
+                </div>
+                <div class="comment-section" style="margin-top:20px;">
+                    ${commentFormHtml}
+                    <div class="comment-list">
+                        ${commentsHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        // ---------- 事件监听 ----------
+        // 使用事件委托处理卡片点击
+        document.addEventListener('click', function(e) {
+            const item = e.target.closest('.post-item');
+            if (item) {
+                const id = item.dataset.postid;
+                if (id) {
+                    window.location = '?post=' + id;
+                }
             }
+        });
 
-            // ---------- 事件委托 ----------
-            document.addEventListener('click', function(e) {
-                const delBtn = e.target.closest('.delete-post-btn');
-                if (delBtn) {
-                    if (userRole !== 'admin') {
-                        alert('⚠️ 权限不足，只有管理员可以删除文章。');
-                        return;
-                    }
-                    e.stopPropagation();
-                    const id = delBtn.dataset.id;
-                    if (!id) { alert('无法识别该文章'); return; }
-                    if (!confirm('确定要删除这篇文章吗？')) return;
-                    const oldPosts = JSON.parse(JSON.stringify(posts));
-                    const newPosts = posts.filter(p => String(p.id) !== id);
-                    savePostsToGitHub(newPosts, oldPosts).then(success => {
-                        if (success) {
-                            posts = newPosts;
-                            if (String(currentPostId) === id) {
-                                showList();
-                            } else {
-                                renderView();
-                            }
+        // 删除文章
+        document.addEventListener('click', function(e) {
+            const delBtn = e.target.closest('.delete-post-btn');
+            if (delBtn) {
+                if (userRole !== 'admin') {
+                    alert('⚠️ 权限不足，只有管理员可以删除文章。');
+                    return;
+                }
+                const id = delBtn.dataset.id;
+                if (!id) { alert('无法识别该文章'); return; }
+                if (!confirm('确定要删除这篇文章吗？')) return;
+                const oldPosts = JSON.parse(JSON.stringify(posts));
+                const newPosts = posts.filter(p => String(p.id) !== id);
+                savePostsToGitHub(newPosts, oldPosts).then(success => {
+                    if (success) {
+                        posts = newPosts;
+                        if (String(currentPostId) === id) {
+                            showList();
+                        } else {
+                            renderView();
                         }
-                    });
+                    }
+                });
+            }
+        });
+
+        // 删除评论
+        document.addEventListener('click', function(e) {
+            const delCommentBtn = e.target.closest('.del-comment');
+            if (delCommentBtn) {
+                if (userRole !== 'admin') {
+                    alert('⚠️ 权限不足，只有管理员可以删除评论。');
                     return;
                 }
-
-                const delCommentBtn = e.target.closest('.del-comment');
-                if (delCommentBtn) {
-                    if (userRole !== 'admin') {
-                        alert('⚠️ 权限不足，只有管理员可以删除评论。');
-                        return;
-                    }
-                    const commentItem = delCommentBtn.closest('.comment-item');
-                    if (!commentItem) return;
-                    const postId = commentItem.dataset.postid;
-                    const idx = Number(commentItem.dataset.commentidx);
-                    if (!postId || isNaN(idx)) { alert('数据异常'); return; }
-                    if (!confirm('删除这条评论？')) return;
-                    const oldPosts = JSON.parse(JSON.stringify(posts));
-                    const post = posts.find(p => String(p.id) === postId);
-                    if (post && post.comments && post.comments.length > idx) {
-                        post.comments.splice(idx, 1);
-                        savePostsToGitHub(posts, oldPosts).then(() => renderView());
-                    }
-                    return;
-                }
-
-                const submitBtn = e.target.closest('.comment-submit');
-                if (submitBtn) {
-                    const form = submitBtn.closest('.comment-form');
-                    if (!form) return;
-                    const postId = form.dataset.postid;
-                    if (!postId) { alert('数据异常'); return; }
-                    const authorInput = form.querySelector('.comment-author-input');
-                    const textInput = form.querySelector('.comment-text-input');
-                    const author = authorInput.value.trim() || '匿名';
-                    const text = textInput.value.trim();
-                    if (!text) { alert('评论内容不能为空'); return; }
-                    const oldPosts = JSON.parse(JSON.stringify(posts));
-                    const post = posts.find(p => String(p.id) === postId);
-                    if (!post) { alert('文章不存在'); return; }
-                    if (!post.comments) post.comments = [];
-                    post.comments.push({ author, text, time: new Date().toISOString() });
+                const commentItem = delCommentBtn.closest('.comment-item');
+                if (!commentItem) return;
+                const postId = commentItem.dataset.postid;
+                const idx = Number(commentItem.dataset.commentidx);
+                if (!postId || isNaN(idx)) { alert('数据异常'); return; }
+                if (!confirm('删除这条评论？')) return;
+                const oldPosts = JSON.parse(JSON.stringify(posts));
+                const post = posts.find(p => String(p.id) === postId);
+                if (post && post.comments && post.comments.length > idx) {
+                    post.comments.splice(idx, 1);
                     savePostsToGitHub(posts, oldPosts).then(() => renderView());
-                    return;
                 }
-            });
+            }
+        });
 
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    const input = e.target.closest('.comment-text-input');
-                    if (input) {
-                        e.preventDefault();
-                        const form = input.closest('.comment-form');
-                        if (form) {
-                            const submitBtn = form.querySelector('.comment-submit');
-                            if (submitBtn) submitBtn.click();
-                        }
+        // 提交评论
+        document.addEventListener('click', function(e) {
+            const submitBtn = e.target.closest('.comment-submit');
+            if (submitBtn) {
+                const form = submitBtn.closest('.comment-form');
+                if (!form) return;
+                const postId = form.dataset.postid;
+                if (!postId) { alert('数据异常'); return; }
+                const authorInput = form.querySelector('.comment-author-input');
+                const textInput = form.querySelector('.comment-text-input');
+                const author = authorInput.value.trim() || '匿名';
+                const text = textInput.value.trim();
+                if (!text) { alert('评论内容不能为空'); return; }
+                const oldPosts = JSON.parse(JSON.stringify(posts));
+                const post = posts.find(p => String(p.id) === postId);
+                if (!post) { alert('文章不存在'); return; }
+                if (!post.comments) post.comments = [];
+                post.comments.push({ author, text, time: new Date().toISOString() });
+                savePostsToGitHub(posts, oldPosts).then(() => renderView());
+            }
+        });
+
+        // 评论输入框回车提交
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const input = e.target.closest('.comment-text-input');
+                if (input) {
+                    e.preventDefault();
+                    const form = input.closest('.comment-form');
+                    if (form) {
+                        const submitBtn = form.querySelector('.comment-submit');
+                        if (submitBtn) submitBtn.click();
                     }
                 }
-            });
+            }
+        });
 
-            // ---------- 导航 ----------
-            homeLink.addEventListener('click', function(e) {
-                e.preventDefault();
-                showList();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
+        // ---------- 导航 ----------
+        homeLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            showList();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
 
-            backToList.addEventListener('click', function(e) {
-                e.preventDefault();
-                showList();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
+        backToList.addEventListener('click', function(e) {
+            e.preventDefault();
+            showList();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
 
-            document.getElementById('writeLink').addEventListener('click', function(e) {
-                e.preventDefault();
-                document.getElementById('publish').scrollIntoView({ behavior: 'smooth' });
-            });
+        writeLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('publish').scrollIntoView({ behavior: 'smooth' });
+        });
 
-            saveBtn.addEventListener('click', function() {
-                if (posts.length === 0) { alert('暂无数据可保存'); return; }
-                savePostsToGitHub(posts);
-            });
+        saveBtn.addEventListener('click', function() {
+            if (posts.length === 0) { alert('暂无数据可保存'); return; }
+            savePostsToGitHub(posts);
+        });
 
-            refreshBtn.addEventListener('click', function() {
-                loadData();
-            });
-
-            window.addEventListener('popstate', function() {
-                renderView();
-            });
-
-            // ---------- 初始化 ----------
-            initPassword();
+        refreshBtn.addEventListener('click', function() {
             loadData();
+        });
 
-        })();
+        saveTokenBtn.addEventListener('click', function() {
+            const token = tokenInput.value.trim();
+            if (!token) { alert('请输入 Token'); return; }
+            if (!isValidToken(token)) { alert('Token 格式不正确，请确保以 ghp_ 开头且长度正确'); return; }
+            saveTokenToStorage(token);
+            updateTokenStatus();
+            alert('✅ Token 已保存！');
+            loadData();
+        });
+
+        savePasswordBtn.addEventListener('click', function() {
+            const pwd = passwordInput.value.trim();
+            if (!pwd) { alert('请输入密码'); return; }
+            const role = verifyPassword(pwd);
+            if (!role) {
+                passwordStatus.innerHTML = '❌ 密码错误';
+                passwordStatus.className = 'token-status invalid';
+                return;
+            }
+            savePasswordToStorage(pwd);
+            updateRoleUI(role);
+            alert('✅ 身份验证成功！当前角色：' + (role === 'admin' ? '管理员' : '访客'));
+        });
+
+        window.addEventListener('popstate', function() {
+            renderView();
+        });
+
+        // ---------- 初始化 ----------
+        updateTokenStatus();
+        initPassword();
+        loadData();
     </script>
 
 </body>
