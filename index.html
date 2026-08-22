@@ -102,13 +102,16 @@
         .single-post.active { display:block; }
         .post-list-container { display:block; }
         .post-list-container.hidden { display:none; }
+        /* 文章详情页隐藏的元素 */
+        .hide-on-single { display:flex; }
+        .single-post-active .hide-on-single { display:none !important; }
         @media (max-width:700px) { .profile-card { flex-direction:column; text-align:center; padding:28px 20px; } .social-links { justify-content:center; } .site-header { flex-direction:column; align-items:flex-start; } .nav-links { width:100%; justify-content:flex-start; gap:18px; } .publish-section { padding:20px; } .post-item { padding:0; } .post-content { padding:16px; } .post-list { grid-template-columns:1fr; } .site-footer { flex-direction:column; text-align:center; } .blog-motto .motto-text { font-size:1.0rem; } .token-settings { flex-direction:column; align-items:stretch; } .token-settings input { min-width:auto; } }
         @media (max-width:480px) { .container { padding:12px 0 30px; } .profile-card { padding:20px 16px; } .avatar { width:80px; height:80px; font-size:2.4rem; } .post-header { flex-direction:column; align-items:flex-start; } .blog-motto { padding:20px 16px; } .token-settings { padding:16px; } .post-thumbnail { height:140px; } }
     </style>
 </head>
 <body>
 
-    <div class="container">
+    <div class="container" id="mainContainer">
 
         <header class="site-header">
             <span class="logo"><i class="fas fa-cube"></i> 铜锭的博客</span>
@@ -122,42 +125,45 @@
             </nav>
         </header>
 
-        <section class="profile-card">
-            <div class="avatar"><i class="fas fa-user-astronaut"></i></div>
-            <div class="profile-info">
-                <h1>铜锭 (tdmc)</h1>
-                <p class="bio">⚡ 欢迎来到铜锭的博客</p>
-                <div class="social-links">
-                    <a href="https://github.com/tdmc123/" target="_blank"><i class="fab fa-github"></i> GitHub</a>
-                    <a href="https://www.luogu.com.cn/user/1969106" target="_blank"><i class="fas fa-code"></i> 洛谷</a>
-                    <a href="https://www.codewars.com/users/Tong%20Ding" target="_blank"><i class="fas fa-terminal"></i> CodeWars</a>
-                    <a href="http://47.105.107.184/" target="_blank"><i class="fas fa-server"></i> 我的OJ</a>
+        <!-- 以下元素在文章详情页会被隐藏 -->
+        <div class="hide-on-single">
+            <section class="profile-card">
+                <div class="avatar"><i class="fas fa-user-astronaut"></i></div>
+                <div class="profile-info">
+                    <h1>铜锭 (tdmc)</h1>
+                    <p class="bio">⚡ 欢迎来到铜锭的博客</p>
+                    <div class="social-links">
+                        <a href="https://github.com/tdmc123/" target="_blank"><i class="fab fa-github"></i> GitHub</a>
+                        <a href="https://www.luogu.com.cn/user/1969106" target="_blank"><i class="fas fa-code"></i> 洛谷</a>
+                        <a href="https://www.codewars.com/users/Tong%20Ding" target="_blank"><i class="fas fa-terminal"></i> CodeWars</a>
+                        <a href="http://47.105.107.184/" target="_blank"><i class="fas fa-server"></i> 我的OJ</a>
+                    </div>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <section class="token-settings" id="tokenSettings">
-            <label for="tokenInput"><i class="fas fa-key"></i> GitHub Token</label>
-            <input type="text" id="tokenInput" placeholder="粘贴您的 GitHub Personal Access Token (ghp_...)" />
-            <button class="btn-sm" id="saveTokenBtn">保存 Token</button>
-            <span class="token-status" id="tokenStatus">⚪ 未设置</span>
-        </section>
+            <section class="token-settings" id="tokenSettings">
+                <label for="tokenInput"><i class="fas fa-key"></i> GitHub Token</label>
+                <input type="text" id="tokenInput" placeholder="粘贴您的 GitHub Personal Access Token (ghp_...)" />
+                <button class="btn-sm" id="saveTokenBtn">保存 Token</button>
+                <span class="token-status" id="tokenStatus">⚪ 未设置</span>
+            </section>
 
-        <section class="token-settings password-settings" id="passwordSettings">
-            <label for="passwordInput"><i class="fas fa-lock"></i> 访问密码</label>
-            <input type="password" id="passwordInput" placeholder="请输入密码" />
-            <button class="btn-sm" id="savePasswordBtn">验证密码</button>
-            <span class="token-status" id="passwordStatus">⚪ 未输入密码</span>
-        </section>
+            <section class="token-settings password-settings" id="passwordSettings">
+                <label for="passwordInput"><i class="fas fa-lock"></i> 访问密码</label>
+                <input type="password" id="passwordInput" placeholder="请输入密码" />
+                <button class="btn-sm" id="savePasswordBtn">验证密码</button>
+                <span class="token-status" id="passwordStatus">⚪ 未输入密码</span>
+            </section>
 
-        <section class="blog-motto">
-            <div class="motto-icon"><i class="fas fa-quote-left"></i></div>
-            <div class="motto-text">
-                这里没有喧嚣，只有一行行代码与一页页文字。<br />
-                每篇文章都是一次对话，每个想法都值得被记录。
-            </div>
-            <div class="motto-author">—— 铜锭 · 2026</div>
-        </section>
+            <section class="blog-motto">
+                <div class="motto-icon"><i class="fas fa-quote-left"></i></div>
+                <div class="motto-text">
+                    这里没有喧嚣，只有一行行代码与一页页文字。<br />
+                    每篇文章都是一次对话，每个想法都值得被记录。
+                </div>
+                <div class="motto-author">—— 铜锭 · 2026</div>
+            </section>
+        </div>
 
         <section class="publish-section" id="publish">
             <h2><i class="fas fa-feather-alt"></i> 发布新文章</h2>
@@ -213,6 +219,7 @@
         let isSaving = false;
         let dataLoaded = false;
 
+        const container = document.getElementById('mainContainer');
         const postListEl = document.getElementById('postList');
         const postListContainer = document.getElementById('postListContainer');
         const singlePostContainer = document.getElementById('singlePostContainer');
@@ -499,6 +506,7 @@
 
         function showList() {
             console.log('📋 显示文章列表');
+            container.classList.remove('single-post-active');
             postListContainer.style.display = 'block';
             singlePostContainer.classList.remove('active');
             singlePostContainer.style.display = 'none';
@@ -523,6 +531,8 @@
                 return;
             }
             console.log('✅ 找到文章:', post.title);
+            // 添加类名隐藏个人信息、Token、密码和寄语
+            container.classList.add('single-post-active');
             postListContainer.style.display = 'none';
             singlePostContainer.style.display = 'block';
             singlePostContainer.classList.add('active');
@@ -720,7 +730,7 @@
             }
         });
 
-        // ---------- 发布文章（新增） ----------
+        // ---------- 发布文章 ----------
         publishForm.addEventListener('submit', function(e) {
             e.preventDefault();
             const title = document.getElementById('postTitle').value.trim();
@@ -745,11 +755,8 @@
             };
             
             posts.push(newPost);
-            // 保存到 GitHub
             savePostsToGitHub(posts, oldPosts).then(() => {
-                // 保存成功后刷新视图
                 renderView();
-                // 清空表单
                 document.getElementById('postTitle').value = '';
                 document.getElementById('postContent').value = '';
                 document.getElementById('postAuthor').value = '';
