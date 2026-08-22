@@ -193,7 +193,7 @@
                 <div class="form-row">
                     <input type="text" id="postAuthor" placeholder="作者名称（留空则显示“匿名”）" />
                 </div>
-                <textarea id="postContent" placeholder="写点什么… (支持纯文本 + 图片语法 ![](url))" required></textarea>
+                <textarea id="postContent" placeholder="写点什么… (支持纯文本 + 图片语法 ![](url) 或 [文字](图片链接))" required></textarea>
                 <button type="submit" class="btn"><i class="fas fa-paper-plane"></i> 发布</button>
             </form>
         </section>
@@ -250,15 +250,26 @@
         const homeLink = document.getElementById('homeLink');
         const writeLink = document.getElementById('writeLink');
 
-        // ===== 新增：解析图片语法 ![](url) =====
+        // ===== 核心修改：支持图片和链接解析 =====
         function parseContent(text) {
             if (!text) return '';
-            return text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(match, alt, url) {
-                if (url.match(/\.(png|jpg|jpeg|gif|webp|svg|bmp|ico)(\?.*)?$/i) || url.includes('image_hosting')) {
-                    return `<img src="${url}" alt="${alt || '图片'}" style="max-width:100%; border-radius:12px; margin:12px 0; display:block;" loading="lazy" />`;
-                }
-                return `<a href="${url}" target="_blank">${alt || url}</a>`;
+            
+            // 1. 先处理图片语法 ![alt](url)
+            let result = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(match, alt, url) {
+                return `<img src="${url}" alt="${alt || '图片'}" style="max-width:100%; border-radius:12px; margin:12px 0; display:block;" loading="lazy" />`;
             });
+            
+            // 2. 再处理普通链接 [text](url)，检查是否指向图片
+            result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function(match, textContent, url) {
+                // 检查是否为图片链接：以常见图片格式结尾，或包含 image_hosting
+                if (url.match(/\.(png|jpg|jpeg|gif|webp|svg|bmp|ico)(\?.*)?$/i) || url.includes('image_hosting')) {
+                    return `<img src="${url}" alt="${textContent}" style="max-width:100%; border-radius:12px; margin:12px 0; display:block;" loading="lazy" />`;
+                }
+                // 普通链接
+                return `<a href="${url}" target="_blank" style="color:var(--accent); text-decoration:underline;">${textContent}</a>`;
+            });
+            
+            return result;
         }
 
         function getStoredToken() { return localStorage.getItem(TOKEN_STORAGE_KEY) || ''; }
@@ -580,7 +591,6 @@
                 const author = post.author ? escapeHtml(post.author) : '匿名';
                 const comments = post.comments || [];
                 const excerpt = post.content.substring(0, 120) + (post.content.length > 120 ? '...' : '');
-                // 解析图片语法
                 const parsedExcerpt = parseContent(escapeHtml(excerpt));
                 const imgId = post.id % 1000;
                 const imgUrl = `https://picsum.photos/seed/${imgId}/400/200`;
@@ -617,7 +627,6 @@
         function renderSinglePost(post) {
             const author = post.author ? escapeHtml(post.author) : '匿名';
             const comments = post.comments || [];
-            // 解析文章内容的图片语法
             const parsedContent = parseContent(escapeHtml(post.content));
 
             let commentsHtml = comments.length === 0 ?
