@@ -6,7 +6,7 @@
     <title>铜锭的博客</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        /* 样式同上，省略以节省篇幅，实际请复制您之前的完整样式 */
+        /* ===== 全局重置 & 暗色变量 ===== */
         * { margin:0; padding:0; box-sizing:border-box; }
         :root { --bg:#121212; --card:#1e1e1e; --border:#333; --text:#e4e4e4; --muted:#aaa; --accent:#4a9eff; --accent-hover:#6aafff; --radius:20px; --shadow:0 8px 28px rgba(0,0,0,0.6); }
         body { font-family:'Segoe UI',sans-serif; background:var(--bg); color:var(--text); line-height:1.6; padding:0 20px; }
@@ -103,6 +103,7 @@
         .single-post.active { display:block; }
         .post-list-container { display:block; }
         .post-list-container.hidden { display:none; }
+        .version-tag { font-size:0.7rem; color:var(--muted); margin-left:12px; }
         @media (max-width:700px) { .profile-card { flex-direction:column; text-align:center; padding:28px 20px; } .social-links { justify-content:center; } .site-header { flex-direction:column; align-items:flex-start; } .nav-links { width:100%; justify-content:flex-start; gap:18px; } .publish-section { padding:20px; } .post-item { padding:0; } .post-content { padding:16px; } .post-list { grid-template-columns:1fr; } .site-footer { flex-direction:column; text-align:center; } .blog-motto .motto-text { font-size:1.0rem; } .token-settings { flex-direction:column; align-items:stretch; } .token-settings input { min-width:auto; } }
         @media (max-width:480px) { .container { padding:12px 0 30px; } .profile-card { padding:20px 16px; } .avatar { width:80px; height:80px; font-size:2.4rem; } .post-header { flex-direction:column; align-items:flex-start; } .blog-motto { padding:20px 16px; } .token-settings { padding:16px; } .post-thumbnail { height:140px; } }
     </style>
@@ -121,6 +122,7 @@
                 <a href="/about">关于</a>
                 <button class="refresh-btn" id="refreshBtn"><i class="fas fa-sync"></i> 刷新</button>
                 <span id="roleBadge" style="font-size:0.8rem; padding:2px 10px; border-radius:12px; background:#888; color:#fff;">🔒 未验证</span>
+                <span class="version-tag">v2.0-API</span>
             </nav>
         </header>
 
@@ -213,6 +215,7 @@
     <script>
         (function() {
             'use strict';
+            console.log('✅ 铜锭博客 v2.0-API 已加载，所有数据通过 GitHub API 获取');
 
             // ---------- 配置 ----------
             const REPO_OWNER = 'tdmc123';
@@ -388,7 +391,7 @@
                 return decoder.decode(bytes);
             }
 
-            // ---------- API 操作 ----------
+            // ---------- 唯一数据获取方式：通过 GitHub API ----------
             async function fetchPostsFromAPI(token) {
                 const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
                 const res = await fetch(url, {
@@ -483,7 +486,7 @@
                 }
             }
 
-            // ---------- 核心加载：纯 API，无缓存，无任何本地请求 ----------
+            // ---------- 核心加载：仅通过 API，无任何本地请求 ----------
             async function loadData() {
                 const token = getStoredToken();
                 if (!isValidToken(token)) {
@@ -546,7 +549,7 @@
                 }
             }
 
-            // ---------- 显示单篇（字符串比较，确保兼容） ----------
+            // ---------- 显示单篇 ----------
             function showSinglePost(id) {
                 const idStr = String(id);
                 const post = posts.find(p => String(p.id) === idStr);
