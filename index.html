@@ -72,6 +72,7 @@
         .post-tags { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0; }
         .post-tags .tag { background:#2a2a2a; padding:2px 12px; border-radius:30px; font-size:.7rem; font-weight:500; color:#b0b0b0; }
         .post-excerpt { font-size:.9rem; color:#ccc; line-height:1.5; margin-bottom:8px; }
+        .post-excerpt img { max-width:100%; height:auto; border-radius:8px; max-height:120px; object-fit:cover; }
         .post-actions { margin-top:12px; border-top:1px solid var(--border); padding-top:12px; display:flex; gap:12px; flex-wrap:wrap; }
         .post-actions button { background:none; border:none; font-size:.8rem; color:var(--muted); cursor:pointer; display:inline-flex; align-items:center; gap:4px; padding:4px 8px; border-radius:20px; transition:background .2s,color .2s; }
         .post-actions button:hover { background:#2a2a2a; color:var(--accent); }
@@ -106,6 +107,10 @@
         /* 文章详情页隐藏 */
         .hide-on-single { display:flex; flex-direction:column; }
         .single-post-active .hide-on-single { display:none !important; }
+        /* 文章图片样式 */
+        .post-body img { max-width:100%; height:auto; border-radius:12px; margin:12px 0; display:block; }
+        .post-body img[align="center"] { margin-left:auto; margin-right:auto; }
+        .post-body img:hover { transform:scale(1.02); transition:transform 0.2s; cursor:pointer; }
         @media (max-width:700px) { .profile-card { flex-direction:column; text-align:center; padding:28px 20px; } .social-links { justify-content:center; } .site-header { flex-direction:column; align-items:flex-start; } .nav-links { width:100%; justify-content:flex-start; gap:18px; } .publish-section { padding:20px; } .post-item { padding:0; } .post-content { padding:16px; } .post-list { grid-template-columns:1fr; } .site-footer { flex-direction:column; text-align:center; } .blog-motto .motto-text { font-size:1.0rem; } .token-settings { flex-direction:column; align-items:stretch; } .token-settings input { min-width:auto; } }
         @media (max-width:480px) { .container { padding:12px 0 30px; } .profile-card { padding:20px 16px; } .avatar { width:80px; height:80px; font-size:2.4rem; } .post-header { flex-direction:column; align-items:flex-start; } .blog-motto { padding:20px 16px; } .token-settings { padding:16px; } .post-thumbnail { height:140px; } }
     </style>
@@ -126,7 +131,7 @@
             </nav>
         </header>
 
-        <!-- 在文章详情页隐藏的元素 -->
+        <!-- 在文章详情页隐藏 -->
         <div class="hide-on-single">
 
             <section class="profile-card">
@@ -143,7 +148,6 @@
                 </div>
             </section>
 
-            <!-- ===== Token 设置（独立行布局） ===== -->
             <section class="token-settings" id="tokenSettings">
                 <label for="tokenInput"><i class="fas fa-key"></i> GitHub Token</label>
                 <div class="token-row">
@@ -153,7 +157,6 @@
                 </div>
             </section>
 
-            <!-- ===== 密码设置（独立行布局） ===== -->
             <section class="token-settings password-settings" id="passwordSettings">
                 <label for="passwordInput"><i class="fas fa-lock"></i> 访问密码</label>
                 <div class="token-row">
@@ -190,7 +193,7 @@
                 <div class="form-row">
                     <input type="text" id="postAuthor" placeholder="作者名称（留空则显示“匿名”）" />
                 </div>
-                <textarea id="postContent" placeholder="写点什么… (支持纯文本)" required></textarea>
+                <textarea id="postContent" placeholder="写点什么… (支持纯文本 + 图片语法 ![](url))" required></textarea>
                 <button type="submit" class="btn"><i class="fas fa-paper-plane"></i> 发布</button>
             </form>
         </section>
@@ -246,6 +249,17 @@
         const roleBadge = document.getElementById('roleBadge');
         const homeLink = document.getElementById('homeLink');
         const writeLink = document.getElementById('writeLink');
+
+        // ===== 新增：解析图片语法 ![](url) =====
+        function parseContent(text) {
+            if (!text) return '';
+            return text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(match, alt, url) {
+                if (url.match(/\.(png|jpg|jpeg|gif|webp|svg|bmp|ico)(\?.*)?$/i) || url.includes('image_hosting')) {
+                    return `<img src="${url}" alt="${alt || '图片'}" style="max-width:100%; border-radius:12px; margin:12px 0; display:block;" loading="lazy" />`;
+                }
+                return `<a href="${url}" target="_blank">${alt || url}</a>`;
+            });
+        }
 
         function getStoredToken() { return localStorage.getItem(TOKEN_STORAGE_KEY) || ''; }
         function saveTokenToStorage(token) { localStorage.setItem(TOKEN_STORAGE_KEY, token); }
@@ -529,17 +543,12 @@
 
         function showSinglePost(id) {
             const idStr = String(id);
-            console.log('🔍 查找文章 ID:', idStr);
-            console.log('📦 posts 数据:', posts);
-            
             const post = posts.find(p => String(p.id) === idStr);
             if (!post) {
-                console.error('❌ 未找到文章:', idStr);
                 alert('文章不存在');
                 showList();
                 return;
             }
-            console.log('✅ 找到文章:', post.title);
             container.classList.add('single-post-active');
             postListContainer.style.display = 'none';
             singlePostContainer.style.display = 'block';
@@ -571,6 +580,8 @@
                 const author = post.author ? escapeHtml(post.author) : '匿名';
                 const comments = post.comments || [];
                 const excerpt = post.content.substring(0, 120) + (post.content.length > 120 ? '...' : '');
+                // 解析图片语法
+                const parsedExcerpt = parseContent(escapeHtml(excerpt));
                 const imgId = post.id % 1000;
                 const imgUrl = `https://picsum.photos/seed/${imgId}/400/200`;
                 const deleteBtnHtml = (userRole === 'admin') ?
@@ -592,7 +603,7 @@
                             <div class="post-tags">
                                 <span class="tag">${escapeHtml(post.tag)}</span>
                             </div>
-                            <div class="post-excerpt">${escapeHtml(excerpt)}</div>
+                            <div class="post-excerpt">${parsedExcerpt}</div>
                             <div class="post-actions">
                                 ${deleteBtnHtml}
                             </div>
@@ -601,12 +612,14 @@
                 `;
             });
             postListEl.innerHTML = html;
-            console.log('✅ 文章列表已渲染，共', sorted.length, '篇文章');
         }
 
         function renderSinglePost(post) {
             const author = post.author ? escapeHtml(post.author) : '匿名';
             const comments = post.comments || [];
+            // 解析文章内容的图片语法
+            const parsedContent = parseContent(escapeHtml(post.content));
+
             let commentsHtml = comments.length === 0 ?
                 `<div class="empty-comment">还没有评论，来说点什么吧</div>` :
                 comments.map((c, idx) => {
@@ -645,7 +658,7 @@
                     <span class="post-author"><i class="fas fa-user"></i> ${author}</span>
                     <span><i class="far fa-comment"></i> ${comments.length} 条评论</span>
                 </div>
-                <div class="post-body" style="font-size:1.1rem; line-height:1.8; padding:0 0 16px 0;">${escapeHtml(post.content)}</div>
+                <div class="post-body" style="font-size:1.1rem; line-height:1.8; padding:0 0 16px 0;">${parsedContent}</div>
                 <div class="post-actions" style="border-top:1px solid var(--border); padding-top:16px; margin-top:8px;">
                     ${deletePostBtn}
                 </div>
@@ -664,7 +677,6 @@
             if (item) {
                 if (e.target.closest('.delete-post-btn')) return;
                 const id = item.getAttribute('data-postid') || item.dataset.postid;
-                console.log('🖱️ 点击卡片，ID:', id);
                 if (id) {
                     window.location.href = '?post=' + id;
                 }
