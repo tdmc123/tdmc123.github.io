@@ -201,7 +201,7 @@
     </div>
 
     <script>
-        // 将所有关键变量和函数放到全局作用域，方便调试
+        // 将所有关键变量和函数放到全局作用域
         const REPO_OWNER = 'tdmc123';
         const REPO_NAME = 'tdmc123.github.io';
         const FILE_PATH = 'posts.json';
@@ -459,6 +459,7 @@
                 const data = await fetchPostsFromAPI(token);
                 if (Array.isArray(data)) {
                     posts = data;
+                    console.log('✅ 数据加载成功，共', posts.length, '篇文章');
                     renderView();
                     return;
                 } else {
@@ -481,6 +482,7 @@
         function renderView() {
             const params = new URLSearchParams(window.location.search);
             const postId = params.get('post');
+            console.log('🔍 renderView 检测到 post 参数:', postId);
             if (postId) {
                 showSinglePost(postId);
             } else {
@@ -489,6 +491,7 @@
         }
 
         function showList() {
+            console.log('📋 显示文章列表');
             postListContainer.style.display = 'block';
             singlePostContainer.classList.remove('active');
             singlePostContainer.style.display = 'none';
@@ -504,6 +507,7 @@
             const idStr = String(id);
             console.log('🔍 查找文章 ID:', idStr);
             console.log('📦 posts 数据:', posts);
+            console.log('📦 posts 长度:', posts.length);
             
             const post = posts.find(p => String(p.id) === idStr);
             if (!post) {
@@ -512,6 +516,7 @@
                 showList();
                 return;
             }
+            console.log('✅ 找到文章:', post.title);
             postListContainer.style.display = 'none';
             singlePostContainer.style.display = 'block';
             singlePostContainer.classList.add('active');
@@ -572,6 +577,7 @@
                 `;
             });
             postListEl.innerHTML = html;
+            console.log('✅ 文章列表已渲染，共', sorted.length, '篇文章');
         }
 
         function renderSinglePost(post) {
@@ -626,16 +632,26 @@
                     </div>
                 </div>
             `;
+            console.log('✅ 单篇文章已渲染:', post.title);
         }
 
         // ---------- 事件监听 ----------
-        // 使用事件委托处理卡片点击
+        // 文章卡片点击事件（使用事件委托 + 调试日志）
         document.addEventListener('click', function(e) {
             const item = e.target.closest('.post-item');
             if (item) {
-                const id = item.dataset.postid;
+                // 如果点击的是删除按钮，不触发跳转
+                if (e.target.closest('.delete-post-btn')) {
+                    return;
+                }
+                const id = item.getAttribute('data-postid') || item.dataset.postid;
+                console.log('🖱️ 点击卡片，ID:', id);
+                console.log('🖱️ 完整 dataset:', item.dataset);
                 if (id) {
-                    window.location = '?post=' + id;
+                    console.log('✅ 跳转到: ?post=' + id);
+                    window.location.href = '?post=' + id;
+                } else {
+                    console.error('❌ 卡片无 data-postid 属性');
                 }
             }
         });
@@ -782,6 +798,7 @@
         });
 
         // ---------- 初始化 ----------
+        console.log('🚀 博客初始化开始...');
         updateTokenStatus();
         initPassword();
         loadData();
