@@ -6,7 +6,8 @@
     <title>铜锭的博客</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        /* ===== 全局重置 & 暗色变量 ===== */
+        /* 样式与之前完全一致，不再重复，请使用您现有样式，此处为保持完整性省略 */
+        /* 实际部署时，请保留您现有的完整样式 */
         * { margin:0; padding:0; box-sizing:border-box; }
         :root { --bg:#121212; --card:#1e1e1e; --border:#333; --text:#e4e4e4; --muted:#aaa; --accent:#4a9eff; --accent-hover:#6aafff; --radius:20px; --shadow:0 8px 28px rgba(0,0,0,0.6); }
         body { font-family:'Segoe UI',sans-serif; background:var(--bg); color:var(--text); line-height:1.6; padding:0 20px; }
@@ -241,7 +242,7 @@
             let posts = [];
             let isSaving = false;
             let currentPostId = null;
-            let userRole = null; // null, 'guest', 'admin'
+            let userRole = null;
 
             // ---------- Token 存储 ----------
             const TOKEN_STORAGE_KEY = 'github_token';
@@ -487,7 +488,6 @@
             async function loadData() {
                 const token = getStoredToken();
                 if (!isValidToken(token)) {
-                    // 未输入或无效 Token，显示提示
                     postListEl.innerHTML = `
                         <div style="text-align:center; padding:40px 20px; background:#2a1a1a; border:2px solid #ff9800; border-radius:12px; color:#ff9800;">
                             <i class="fas fa-key" style="font-size:2.5rem; display:block; margin-bottom:12px;"></i>
@@ -511,7 +511,6 @@
                     }
                 } catch (err) {
                     console.error('加载失败:', err);
-                    // 直接显示错误，不读取任何缓存
                     postListEl.innerHTML = `
                         <div style="text-align:center; padding:40px 20px; color:var(--muted);">
                             <i class="fas fa-exclamation-triangle" style="font-size:2rem; display:block; margin-bottom:12px; color:#ff9800;"></i>
@@ -529,7 +528,7 @@
                 const params = new URLSearchParams(window.location.search);
                 const postId = params.get('post');
                 if (postId) {
-                    showSinglePost(parseInt(postId));
+                    showSinglePost(postId);
                 } else {
                     showList();
                 }
@@ -548,9 +547,11 @@
                 }
             }
 
-            // ---------- 显示单篇 ----------
+            // ---------- 显示单篇（修复：使用字符串比较） ----------
             function showSinglePost(id) {
-                const post = posts.find(p => p.id === id);
+                // 统一转为字符串比较，兼容数字和字符串 ID
+                const idStr = String(id);
+                const post = posts.find(p => String(p.id) === idStr);
                 if (!post) {
                     alert('文章不存在');
                     showList();
@@ -561,10 +562,10 @@
                 singlePostContainer.classList.add('active');
                 document.getElementById('publish').style.display = 'none';
                 renderSinglePost(post);
-                if (window.location.search !== `?post=${id}`) {
-                    window.history.pushState({}, '', `?post=${id}`);
+                if (window.location.search !== `?post=${idStr}`) {
+                    window.history.pushState({}, '', `?post=${idStr}`);
                 }
-                currentPostId = id;
+                currentPostId = post.id;
             }
 
             // ---------- 渲染卡片网格 ----------
@@ -589,8 +590,9 @@
                     const excerpt = post.content.substring(0, 120) + (post.content.length > 120 ? '...' : '');
                     const imgId = post.id % 1000;
                     const imgUrl = `https://picsum.photos/seed/${imgId}/400/200`;
+                    // 使用 String(post.id) 确保 data-id 为字符串，便于后续比较
                     const deleteBtnHtml = (userRole === 'admin') ?
-                        `<button class="delete-post-btn" data-id="${post.id}"><i class="fas fa-trash-alt"></i> 删除</button>` :
+                        `<button class="delete-post-btn" data-id="${String(post.id)}"><i class="fas fa-trash-alt"></i> 删除</button>` :
                         '';
 
                     html += `
@@ -630,7 +632,7 @@
                             `<button class="del-comment" title="删除评论"><i class="fas fa-times"></i></button>` :
                             '';
                         return `
-                            <div class="comment-item" data-postid="${post.id}" data-commentidx="${idx}">
+                            <div class="comment-item" data-postid="${String(post.id)}" data-commentidx="${idx}">
                                 <span class="comment-author">${escapeHtml(c.author)}</span>
                                 <span class="comment-text">${escapeHtml(c.text)}</span>
                                 <span class="comment-time">${formatTime(c.time)}</span>
@@ -640,7 +642,7 @@
                     }).join('');
 
                 const commentFormHtml = `
-                    <div class="comment-form" data-postid="${post.id}">
+                    <div class="comment-form" data-postid="${String(post.id)}">
                         <input type="text" placeholder="你的昵称" class="comment-author-input" value="访客" />
                         <input type="text" placeholder="说点什么…" class="comment-text-input" />
                         <button class="btn-sm comment-submit">评论</button>
@@ -648,7 +650,7 @@
                 `;
 
                 const deletePostBtn = (userRole === 'admin') ?
-                    `<button class="delete-post-btn" data-id="${post.id}"><i class="fas fa-trash-alt"></i> 删除文章</button>` :
+                    `<button class="delete-post-btn" data-id="${String(post.id)}"><i class="fas fa-trash-alt"></i> 删除文章</button>` :
                     '';
 
                 singlePostContent.innerHTML = `
@@ -683,15 +685,15 @@
                         return;
                     }
                     e.stopPropagation();
-                    const id = Number(delBtn.dataset.id);
-                    if (isNaN(id) || id === 0) { alert('无法识别该文章'); return; }
+                    const id = delBtn.dataset.id; // 保持字符串
+                    if (!id) { alert('无法识别该文章'); return; }
                     if (!confirm('确定要删除这篇文章吗？')) return;
                     const oldPosts = JSON.parse(JSON.stringify(posts));
-                    const newPosts = posts.filter(p => p.id !== id);
+                    const newPosts = posts.filter(p => String(p.id) !== id);
                     savePostsToGitHub(newPosts, oldPosts).then(success => {
                         if (success) {
                             posts = newPosts;
-                            if (currentPostId === id) {
+                            if (String(currentPostId) === id) {
                                 showList();
                             } else {
                                 renderView();
@@ -709,12 +711,12 @@
                     }
                     const commentItem = delCommentBtn.closest('.comment-item');
                     if (!commentItem) return;
-                    const postId = Number(commentItem.dataset.postid);
+                    const postId = commentItem.dataset.postid;
                     const idx = Number(commentItem.dataset.commentidx);
-                    if (isNaN(postId) || isNaN(idx)) { alert('数据异常'); return; }
+                    if (!postId || isNaN(idx)) { alert('数据异常'); return; }
                     if (!confirm('删除这条评论？')) return;
                     const oldPosts = JSON.parse(JSON.stringify(posts));
-                    const post = posts.find(p => p.id === postId);
+                    const post = posts.find(p => String(p.id) === postId);
                     if (post && post.comments && post.comments.length > idx) {
                         post.comments.splice(idx, 1);
                         savePostsToGitHub(posts, oldPosts).then(() => renderView());
@@ -726,15 +728,15 @@
                 if (submitBtn) {
                     const form = submitBtn.closest('.comment-form');
                     if (!form) return;
-                    const postId = Number(form.dataset.postid);
-                    if (isNaN(postId)) { alert('数据异常'); return; }
+                    const postId = form.dataset.postid;
+                    if (!postId) { alert('数据异常'); return; }
                     const authorInput = form.querySelector('.comment-author-input');
                     const textInput = form.querySelector('.comment-text-input');
                     const author = authorInput.value.trim() || '匿名';
                     const text = textInput.value.trim();
                     if (!text) { alert('评论内容不能为空'); return; }
                     const oldPosts = JSON.parse(JSON.stringify(posts));
-                    const post = posts.find(p => p.id === postId);
+                    const post = posts.find(p => String(p.id) === postId);
                     if (!post) { alert('文章不存在'); return; }
                     if (!post.comments) post.comments = [];
                     post.comments.push({ author, text, time: new Date().toISOString() });
