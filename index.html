@@ -201,7 +201,6 @@
     </div>
 
     <script>
-        // 将所有关键变量和函数放到全局作用域
         const REPO_OWNER = 'tdmc123';
         const REPO_NAME = 'tdmc123.github.io';
         const FILE_PATH = 'posts.json';
@@ -212,8 +211,8 @@
         let userRole = null;
         let currentPostId = null;
         let isSaving = false;
+        let dataLoaded = false;
 
-        // DOM 元素
         const postListEl = document.getElementById('postList');
         const postListContainer = document.getElementById('postListContainer');
         const singlePostContainer = document.getElementById('singlePostContainer');
@@ -232,17 +231,9 @@
         const homeLink = document.getElementById('homeLink');
         const writeLink = document.getElementById('writeLink');
 
-        function getStoredToken() {
-            return localStorage.getItem(TOKEN_STORAGE_KEY) || '';
-        }
-
-        function saveTokenToStorage(token) {
-            localStorage.setItem(TOKEN_STORAGE_KEY, token);
-        }
-
-        function isValidToken(token) {
-            return token && token.startsWith('ghp_') && token.length > 10;
-        }
+        function getStoredToken() { return localStorage.getItem(TOKEN_STORAGE_KEY) || ''; }
+        function saveTokenToStorage(token) { localStorage.setItem(TOKEN_STORAGE_KEY, token); }
+        function isValidToken(token) { return token && token.startsWith('ghp_') && token.length > 10; }
 
         function updateTokenStatus() {
             const token = getStoredToken();
@@ -259,14 +250,8 @@
             tokenInput.value = token;
         }
 
-        function getStoredPassword() {
-            return localStorage.getItem(PASSWORD_STORAGE_KEY) || '';
-        }
-
-        function savePasswordToStorage(pwd) {
-            localStorage.setItem(PASSWORD_STORAGE_KEY, pwd);
-        }
-
+        function getStoredPassword() { return localStorage.getItem(PASSWORD_STORAGE_KEY) || ''; }
+        function savePasswordToStorage(pwd) { localStorage.setItem(PASSWORD_STORAGE_KEY, pwd); }
         function verifyPassword(pwd) {
             if (pwd === '258088') return 'admin';
             if (pwd === '123456') return 'guest';
@@ -323,9 +308,7 @@
             return d.toLocaleString('zh-CN', { hour12: false });
         }
 
-        function genId() {
-            return Date.now() + Math.floor(Math.random() * 1000000);
-        }
+        function genId() { return Date.now() + Math.floor(Math.random() * 1000000); }
 
         function base64Encode(str) {
             const encoder = new TextEncoder();
@@ -418,7 +401,7 @@
                     const errorData = await putRes.json();
                     throw new Error(errorData.message || '更新文件失败');
                 }
-                console.log('✅ 保存成功，正在重新加载...');
+                console.log('✅ 保存成功');
                 const freshData = await fetchPostsFromAPI(token);
                 posts = freshData;
                 renderView();
@@ -439,6 +422,9 @@
             }
         }
 
+        // ============================================================
+        // ★★★ 核心修复：数据加载完成后才处理 URL 参数 ★★★
+        // ============================================================
         async function loadData() {
             const token = getStoredToken();
             if (!isValidToken(token)) {
@@ -460,7 +446,16 @@
                 if (Array.isArray(data)) {
                     posts = data;
                     console.log('✅ 数据加载成功，共', posts.length, '篇文章');
-                    renderView();
+                    dataLoaded = true;
+                    // ★★★ 数据加载完成后，再检查 URL 参数 ★★★
+                    const params = new URLSearchParams(window.location.search);
+                    const postId = params.get('post');
+                    if (postId) {
+                        console.log('🔍 数据加载完成后检测到 post 参数:', postId);
+                        showSinglePost(postId);
+                    } else {
+                        showList();
+                    }
                     return;
                 } else {
                     throw new Error('数据格式无效');
@@ -480,9 +475,13 @@
         }
 
         function renderView() {
+            // 如果数据还未加载，不处理 URL 参数（由 loadData 完成后处理）
+            if (!dataLoaded) {
+                console.log('⏳ 数据尚未加载，跳过 renderView');
+                return;
+            }
             const params = new URLSearchParams(window.location.search);
             const postId = params.get('post');
-            console.log('🔍 renderView 检测到 post 参数:', postId);
             if (postId) {
                 showSinglePost(postId);
             } else {
@@ -507,7 +506,6 @@
             const idStr = String(id);
             console.log('🔍 查找文章 ID:', idStr);
             console.log('📦 posts 数据:', posts);
-            console.log('📦 posts 长度:', posts.length);
             
             const post = posts.find(p => String(p.id) === idStr);
             if (!post) {
@@ -632,69 +630,43 @@
                     </div>
                 </div>
             `;
-            console.log('✅ 单篇文章已渲染:', post.title);
         }
 
         // ---------- 事件监听 ----------
-        // 文章卡片点击事件（使用事件委托 + 调试日志）
         document.addEventListener('click', function(e) {
             const item = e.target.closest('.post-item');
             if (item) {
-                // 如果点击的是删除按钮，不触发跳转
-                if (e.target.closest('.delete-post-btn')) {
-                    return;
-                }
+                if (e.target.closest('.delete-post-btn')) return;
                 const id = item.getAttribute('data-postid') || item.dataset.postid;
                 console.log('🖱️ 点击卡片，ID:', id);
-                console.log('🖱️ 完整 dataset:', item.dataset);
                 if (id) {
-                    console.log('✅ 跳转到: ?post=' + id);
                     window.location.href = '?post=' + id;
-                } else {
-                    console.error('❌ 卡片无 data-postid 属性');
                 }
             }
         });
 
-        // 删除文章
         document.addEventListener('click', function(e) {
             const delBtn = e.target.closest('.delete-post-btn');
             if (delBtn) {
-                if (userRole !== 'admin') {
-                    alert('⚠️ 权限不足，只有管理员可以删除文章。');
-                    return;
-                }
+                if (userRole !== 'admin') { alert('⚠️ 权限不足'); return; }
                 const id = delBtn.dataset.id;
-                if (!id) { alert('无法识别该文章'); return; }
+                if (!id) return;
                 if (!confirm('确定要删除这篇文章吗？')) return;
                 const oldPosts = JSON.parse(JSON.stringify(posts));
                 const newPosts = posts.filter(p => String(p.id) !== id);
-                savePostsToGitHub(newPosts, oldPosts).then(success => {
-                    if (success) {
-                        posts = newPosts;
-                        if (String(currentPostId) === id) {
-                            showList();
-                        } else {
-                            renderView();
-                        }
-                    }
-                });
+                savePostsToGitHub(newPosts, oldPosts).then(() => renderView());
             }
         });
 
-        // 删除评论
         document.addEventListener('click', function(e) {
             const delCommentBtn = e.target.closest('.del-comment');
             if (delCommentBtn) {
-                if (userRole !== 'admin') {
-                    alert('⚠️ 权限不足，只有管理员可以删除评论。');
-                    return;
-                }
+                if (userRole !== 'admin') { alert('⚠️ 权限不足'); return; }
                 const commentItem = delCommentBtn.closest('.comment-item');
                 if (!commentItem) return;
                 const postId = commentItem.dataset.postid;
                 const idx = Number(commentItem.dataset.commentidx);
-                if (!postId || isNaN(idx)) { alert('数据异常'); return; }
+                if (!postId || isNaN(idx)) return;
                 if (!confirm('删除这条评论？')) return;
                 const oldPosts = JSON.parse(JSON.stringify(posts));
                 const post = posts.find(p => String(p.id) === postId);
@@ -705,14 +677,13 @@
             }
         });
 
-        // 提交评论
         document.addEventListener('click', function(e) {
             const submitBtn = e.target.closest('.comment-submit');
             if (submitBtn) {
                 const form = submitBtn.closest('.comment-form');
                 if (!form) return;
                 const postId = form.dataset.postid;
-                if (!postId) { alert('数据异常'); return; }
+                if (!postId) return;
                 const authorInput = form.querySelector('.comment-author-input');
                 const textInput = form.querySelector('.comment-text-input');
                 const author = authorInput.value.trim() || '匿名';
@@ -727,7 +698,6 @@
             }
         });
 
-        // 评论输入框回车提交
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 const input = e.target.closest('.comment-text-input');
@@ -742,7 +712,6 @@
             }
         });
 
-        // ---------- 导航 ----------
         homeLink.addEventListener('click', function(e) {
             e.preventDefault();
             showList();
@@ -772,7 +741,7 @@
         saveTokenBtn.addEventListener('click', function() {
             const token = tokenInput.value.trim();
             if (!token) { alert('请输入 Token'); return; }
-            if (!isValidToken(token)) { alert('Token 格式不正确，请确保以 ghp_ 开头且长度正确'); return; }
+            if (!isValidToken(token)) { alert('Token 格式不正确'); return; }
             saveTokenToStorage(token);
             updateTokenStatus();
             alert('✅ Token 已保存！');
