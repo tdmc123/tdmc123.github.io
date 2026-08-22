@@ -6,8 +6,7 @@
     <title>铜锭的博客</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        /* 样式与之前完全一致，不再重复，请使用您现有样式，此处为保持完整性省略 */
-        /* 实际部署时，请保留您现有的完整样式 */
+        /* 样式同上，省略以节省篇幅，实际请复制您之前的完整样式 */
         * { margin:0; padding:0; box-sizing:border-box; }
         :root { --bg:#121212; --card:#1e1e1e; --border:#333; --text:#e4e4e4; --muted:#aaa; --accent:#4a9eff; --accent-hover:#6aafff; --radius:20px; --shadow:0 8px 28px rgba(0,0,0,0.6); }
         body { font-family:'Segoe UI',sans-serif; background:var(--bg); color:var(--text); line-height:1.6; padding:0 20px; }
@@ -484,7 +483,7 @@
                 }
             }
 
-            // ---------- 核心加载：纯 API，无缓存 ----------
+            // ---------- 核心加载：纯 API，无缓存，无任何本地请求 ----------
             async function loadData() {
                 const token = getStoredToken();
                 if (!isValidToken(token)) {
@@ -547,9 +546,8 @@
                 }
             }
 
-            // ---------- 显示单篇（修复：使用字符串比较） ----------
+            // ---------- 显示单篇（字符串比较，确保兼容） ----------
             function showSinglePost(id) {
-                // 统一转为字符串比较，兼容数字和字符串 ID
                 const idStr = String(id);
                 const post = posts.find(p => String(p.id) === idStr);
                 if (!post) {
@@ -590,7 +588,6 @@
                     const excerpt = post.content.substring(0, 120) + (post.content.length > 120 ? '...' : '');
                     const imgId = post.id % 1000;
                     const imgUrl = `https://picsum.photos/seed/${imgId}/400/200`;
-                    // 使用 String(post.id) 确保 data-id 为字符串，便于后续比较
                     const deleteBtnHtml = (userRole === 'admin') ?
                         `<button class="delete-post-btn" data-id="${String(post.id)}"><i class="fas fa-trash-alt"></i> 删除</button>` :
                         '';
@@ -685,7 +682,7 @@
                         return;
                     }
                     e.stopPropagation();
-                    const id = delBtn.dataset.id; // 保持字符串
+                    const id = delBtn.dataset.id;
                     if (!id) { alert('无法识别该文章'); return; }
                     if (!confirm('确定要删除这篇文章吗？')) return;
                     const oldPosts = JSON.parse(JSON.stringify(posts));
