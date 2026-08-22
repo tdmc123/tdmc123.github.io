@@ -29,8 +29,9 @@
         .social-links a { color:var(--muted); transition:color .2s,transform .15s; display:inline-flex; align-items:center; gap:6px; font-size:.95rem; text-decoration:none; }
         .social-links a i { font-size:1.3rem; }
         .social-links a:hover { color:var(--accent); transform:translateY(-2px); }
-        .token-settings { background:var(--card); border-radius:var(--radius); padding:20px 24px; margin-bottom:16px; border:1px solid var(--border); box-shadow:var(--shadow); display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
+        .token-settings { background:var(--card); border-radius:var(--radius); padding:20px 24px; margin-bottom:16px; border:1px solid var(--border); box-shadow:var(--shadow); display:flex; flex-direction:column; gap:8px; }
         .token-settings label { font-weight:500; color:var(--muted); display:flex; align-items:center; gap:6px; }
+        .token-settings .token-row { display:flex; gap:12px; width:100%; align-items:center; flex-wrap:wrap; }
         .token-settings input { flex:1; min-width:200px; padding:8px 14px; border:1px solid var(--border); border-radius:30px; background:#2a2a2a; color:#e4e4e4; font-size:.9rem; outline:none; transition:border-color .2s; }
         .token-settings input:focus { border-color:var(--accent); }
         .token-settings .btn-sm { padding:8px 20px; background:var(--accent); color:#fff; border:none; border-radius:30px; cursor:pointer; font-weight:500; transition:background .2s; white-space:nowrap; }
@@ -102,8 +103,8 @@
         .single-post.active { display:block; }
         .post-list-container { display:block; }
         .post-list-container.hidden { display:none; }
-        /* 文章详情页隐藏的元素 */
-        .hide-on-single { display:flex; }
+        /* 文章详情页隐藏 */
+        .hide-on-single { display:flex; flex-direction:column; }
         .single-post-active .hide-on-single { display:none !important; }
         @media (max-width:700px) { .profile-card { flex-direction:column; text-align:center; padding:28px 20px; } .social-links { justify-content:center; } .site-header { flex-direction:column; align-items:flex-start; } .nav-links { width:100%; justify-content:flex-start; gap:18px; } .publish-section { padding:20px; } .post-item { padding:0; } .post-content { padding:16px; } .post-list { grid-template-columns:1fr; } .site-footer { flex-direction:column; text-align:center; } .blog-motto .motto-text { font-size:1.0rem; } .token-settings { flex-direction:column; align-items:stretch; } .token-settings input { min-width:auto; } }
         @media (max-width:480px) { .container { padding:12px 0 30px; } .profile-card { padding:20px 16px; } .avatar { width:80px; height:80px; font-size:2.4rem; } .post-header { flex-direction:column; align-items:flex-start; } .blog-motto { padding:20px 16px; } .token-settings { padding:16px; } .post-thumbnail { height:140px; } }
@@ -125,8 +126,9 @@
             </nav>
         </header>
 
-        <!-- 以下元素在文章详情页会被隐藏 -->
+        <!-- 在文章详情页隐藏的元素 -->
         <div class="hide-on-single">
+
             <section class="profile-card">
                 <div class="avatar"><i class="fas fa-user-astronaut"></i></div>
                 <div class="profile-info">
@@ -141,18 +143,24 @@
                 </div>
             </section>
 
+            <!-- ===== Token 设置（独立行布局） ===== -->
             <section class="token-settings" id="tokenSettings">
                 <label for="tokenInput"><i class="fas fa-key"></i> GitHub Token</label>
-                <input type="text" id="tokenInput" placeholder="粘贴您的 GitHub Personal Access Token (ghp_...)" />
-                <button class="btn-sm" id="saveTokenBtn">保存 Token</button>
-                <span class="token-status" id="tokenStatus">⚪ 未设置</span>
+                <div class="token-row">
+                    <input type="text" id="tokenInput" placeholder="粘贴您的 GitHub Personal Access Token (ghp_...)" />
+                    <button class="btn-sm" id="saveTokenBtn">保存 Token</button>
+                    <span class="token-status" id="tokenStatus">⚪ 未设置</span>
+                </div>
             </section>
 
+            <!-- ===== 密码设置（独立行布局） ===== -->
             <section class="token-settings password-settings" id="passwordSettings">
                 <label for="passwordInput"><i class="fas fa-lock"></i> 访问密码</label>
-                <input type="password" id="passwordInput" placeholder="请输入密码" />
-                <button class="btn-sm" id="savePasswordBtn">验证密码</button>
-                <span class="token-status" id="passwordStatus">⚪ 未输入密码</span>
+                <div class="token-row">
+                    <input type="password" id="passwordInput" placeholder="请输入密码" />
+                    <button class="btn-sm" id="savePasswordBtn">验证密码</button>
+                    <span class="token-status" id="passwordStatus">⚪ 未输入密码</span>
+                </div>
             </section>
 
             <section class="blog-motto">
@@ -163,6 +171,7 @@
                 </div>
                 <div class="motto-author">—— 铜锭 · 2026</div>
             </section>
+
         </div>
 
         <section class="publish-section" id="publish">
@@ -531,7 +540,6 @@
                 return;
             }
             console.log('✅ 找到文章:', post.title);
-            // 添加类名隐藏个人信息、Token、密码和寄语
             container.classList.add('single-post-active');
             postListContainer.style.display = 'none';
             singlePostContainer.style.display = 'block';
