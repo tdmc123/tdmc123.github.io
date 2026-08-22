@@ -212,6 +212,7 @@
         let currentPostId = null;
         let isSaving = false;
         let dataLoaded = false;
+        let isInitialized = false;
 
         const postListEl = document.getElementById('postList');
         const postListContainer = document.getElementById('postListContainer');
@@ -258,7 +259,8 @@
             return null;
         }
 
-        function updateRoleUI(role) {
+        // ---------- 更新角色 UI（不触发 renderView） ----------
+        function updateRoleUIOnly(role) {
             userRole = role;
             if (role === 'admin') {
                 roleBadge.textContent = '👑 管理员';
@@ -276,7 +278,14 @@
                 passwordStatus.innerHTML = '⚪ 未输入密码';
                 passwordStatus.className = 'token-status';
             }
-            renderView();
+        }
+
+        function updateRoleUI(role) {
+            updateRoleUIOnly(role);
+            // 仅在数据已加载时才重新渲染
+            if (dataLoaded) {
+                renderView();
+            }
         }
 
         function initPassword() {
@@ -284,14 +293,14 @@
             if (storedPwd) {
                 const role = verifyPassword(storedPwd);
                 if (role) {
-                    updateRoleUI(role);
+                    updateRoleUIOnly(role);
                     passwordInput.value = storedPwd;
                     return;
                 } else {
                     localStorage.removeItem(PASSWORD_STORAGE_KEY);
                 }
             }
-            updateRoleUI(null);
+            updateRoleUIOnly(null);
             passwordInput.value = '';
         }
 
@@ -404,6 +413,7 @@
                 console.log('✅ 保存成功');
                 const freshData = await fetchPostsFromAPI(token);
                 posts = freshData;
+                dataLoaded = true;
                 renderView();
                 alert('✅ 操作已成功保存到 GitHub！');
                 return true;
@@ -423,7 +433,7 @@
         }
 
         // ============================================================
-        // ★★★ 核心修复：数据加载完成后才处理 URL 参数 ★★★
+        // ★★★ 核心：先加载数据，再处理视图 ★★★
         // ============================================================
         async function loadData() {
             const token = getStoredToken();
@@ -436,6 +446,7 @@
                     </div>
                 `;
                 posts = [];
+                dataLoaded = true;
                 return;
             }
 
@@ -445,17 +456,10 @@
                 const data = await fetchPostsFromAPI(token);
                 if (Array.isArray(data)) {
                     posts = data;
-                    console.log('✅ 数据加载成功，共', posts.length, '篇文章');
                     dataLoaded = true;
-                    // ★★★ 数据加载完成后，再检查 URL 参数 ★★★
-                    const params = new URLSearchParams(window.location.search);
-                    const postId = params.get('post');
-                    if (postId) {
-                        console.log('🔍 数据加载完成后检测到 post 参数:', postId);
-                        showSinglePost(postId);
-                    } else {
-                        showList();
-                    }
+                    console.log('✅ 数据加载成功，共', posts.length, '篇文章');
+                    // ★★★ 数据加载完成后，再处理视图（包括 URL 参数） ★★★
+                    handleViewAfterLoad();
                     return;
                 } else {
                     throw new Error('数据格式无效');
@@ -471,11 +475,24 @@
                     </div>
                 `;
                 posts = [];
+                dataLoaded = true;
+            }
+        }
+
+        // 数据加载完成后处理视图
+        function handleViewAfterLoad() {
+            const params = new URLSearchParams(window.location.search);
+            const postId = params.get('post');
+            if (postId) {
+                console.log('🔍 数据加载完成后检测到 post 参数:', postId);
+                showSinglePost(postId);
+            } else {
+                showList();
             }
         }
 
         function renderView() {
-            // 如果数据还未加载，不处理 URL 参数（由 loadData 完成后处理）
+            // 如果数据未加载，不处理视图（由 loadData 完成后调用 handleViewAfterLoad）
             if (!dataLoaded) {
                 console.log('⏳ 数据尚未加载，跳过 renderView');
                 return;
@@ -770,6 +787,7 @@
         console.log('🚀 博客初始化开始...');
         updateTokenStatus();
         initPassword();
+        // 先加载数据，数据加载完成后自动处理视图
         loadData();
     </script>
 
