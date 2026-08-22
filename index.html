@@ -212,7 +212,6 @@
         let currentPostId = null;
         let isSaving = false;
         let dataLoaded = false;
-        let isInitialized = false;
 
         const postListEl = document.getElementById('postList');
         const postListContainer = document.getElementById('postListContainer');
@@ -259,7 +258,6 @@
             return null;
         }
 
-        // ---------- 更新角色 UI（不触发 renderView） ----------
         function updateRoleUIOnly(role) {
             userRole = role;
             if (role === 'admin') {
@@ -282,7 +280,6 @@
 
         function updateRoleUI(role) {
             updateRoleUIOnly(role);
-            // 仅在数据已加载时才重新渲染
             if (dataLoaded) {
                 renderView();
             }
@@ -432,9 +429,6 @@
             }
         }
 
-        // ============================================================
-        // ★★★ 核心：先加载数据，再处理视图 ★★★
-        // ============================================================
         async function loadData() {
             const token = getStoredToken();
             if (!isValidToken(token)) {
@@ -458,7 +452,6 @@
                     posts = data;
                     dataLoaded = true;
                     console.log('✅ 数据加载成功，共', posts.length, '篇文章');
-                    // ★★★ 数据加载完成后，再处理视图（包括 URL 参数） ★★★
                     handleViewAfterLoad();
                     return;
                 } else {
@@ -479,7 +472,6 @@
             }
         }
 
-        // 数据加载完成后处理视图
         function handleViewAfterLoad() {
             const params = new URLSearchParams(window.location.search);
             const postId = params.get('post');
@@ -492,7 +484,6 @@
         }
 
         function renderView() {
-            // 如果数据未加载，不处理视图（由 loadData 完成后调用 handleViewAfterLoad）
             if (!dataLoaded) {
                 console.log('⏳ 数据尚未加载，跳过 renderView');
                 return;
@@ -729,6 +720,43 @@
             }
         });
 
+        // ---------- 发布文章（新增） ----------
+        publishForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const title = document.getElementById('postTitle').value.trim();
+            const content = document.getElementById('postContent').value.trim();
+            const tag = document.getElementById('postTag').value;
+            const author = document.getElementById('postAuthor').value.trim() || '匿名';
+            
+            if (!title || !content) {
+                alert('标题和内容都不能为空');
+                return;
+            }
+            
+            const oldPosts = JSON.parse(JSON.stringify(posts));
+            const newPost = {
+                id: genId(),
+                title: title,
+                content: content,
+                tag: tag,
+                author: author,
+                date: new Date().toISOString().slice(0, 10),
+                comments: []
+            };
+            
+            posts.push(newPost);
+            // 保存到 GitHub
+            savePostsToGitHub(posts, oldPosts).then(() => {
+                // 保存成功后刷新视图
+                renderView();
+                // 清空表单
+                document.getElementById('postTitle').value = '';
+                document.getElementById('postContent').value = '';
+                document.getElementById('postAuthor').value = '';
+            });
+        });
+
+        // ---------- 导航 ----------
         homeLink.addEventListener('click', function(e) {
             e.preventDefault();
             showList();
@@ -787,7 +815,6 @@
         console.log('🚀 博客初始化开始...');
         updateTokenStatus();
         initPassword();
-        // 先加载数据，数据加载完成后自动处理视图
         loadData();
     </script>
 
